@@ -9,7 +9,7 @@ use psu;
 ///
 /// This is currently just a subset, omitting all commands to do with
 /// programmable presets.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Command {
     /// Set the supply's output voltage.
     SetVoltage(f32),
@@ -141,12 +141,7 @@ impl Command {
                 vec![Arg::new(amps, psu.current_decimals(), 3)]
             }
             SetOutput(ref state) => {
-                let val = match *state {
-                    psu::OutputState::On => 0.,
-                    psu::OutputState::Off => 1.,
-                };
-
-                vec![Arg::new(val, 0, 1)]
+                vec![Arg::new(state.arg_val() as f32, 0, 1)]
             }
             SetPresets(ref p1, ref p2, ref p3) => {
                 let mut args = Vec::with_capacity(6);
@@ -167,13 +162,7 @@ impl Command {
                 args
             }
             SelectPreset(ref preset) => {
-                let val = match *preset {
-                    psu::PresetIndex::Preset1 => 0.,
-                    psu::PresetIndex::Preset2 => 1.,
-                    psu::PresetIndex::Preset3 => 2.,
-                };
-
-                vec![Arg::new(val, 0, 1)]
+                vec![Arg::new(preset.arg_val() as f32, 0, 1)]
             }
             GetSettings | GetStatus | GetVoltageLimit | GetCurrentLimit
             | GetCapabilities | GetPresets => vec![],
@@ -547,9 +536,9 @@ test_suite! {
 
     test serialize_select_preset(any_psu) {
         let pairs = vec![
-            CommandPair { command: Command::SelectPreset(PresetIndex::Preset1), serialized: "RUNM0\r" },
-            CommandPair { command: Command::SelectPreset(PresetIndex::Preset2), serialized: "RUNM1\r" },
-            CommandPair { command: Command::SelectPreset(PresetIndex::Preset3), serialized: "RUNM2\r" },
+            CommandPair { command: Command::SelectPreset(PresetIndex::One), serialized: "RUNM0\r" },
+            CommandPair { command: Command::SelectPreset(PresetIndex::Two), serialized: "RUNM1\r" },
+            CommandPair { command: Command::SelectPreset(PresetIndex::Three), serialized: "RUNM2\r" },
         ];
 
         assert_pairs_match(pairs, any_psu.val);

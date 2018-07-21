@@ -16,7 +16,7 @@
 use std::{fmt::Debug, panic::RefUnwindSafe};
 
 /// Output state of the supply.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum OutputState {
     /// The supply is actively providing power.
     On,
@@ -25,21 +25,47 @@ pub enum OutputState {
     Off,
 }
 
+impl OutputState {
+    /// Get a value appropriate for using in a command.
+    ///
+    /// N.B.: This field has inverted logic in commands -- it uses 0 for on, and
+    /// 1 for off.
+    pub fn arg_val(&self) -> usize {
+        match *self {
+            OutputState::On => 0,
+            OutputState::Off => 1,
+        }
+    }
+}
+
 /// Used to select a single preset
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum PresetIndex {
     /// First preset
-    Preset1,
+    One,
 
     /// Second preset
-    Preset2,
+    Two,
 
     /// Third preset
-    Preset3,
+    Three,
+}
+
+impl PresetIndex {
+    /// Get a concrete index integer for this preset.
+    ///
+    /// Appropriate for use in commands, or for indexing preset arrays.
+    pub fn arg_val(&self) -> usize {
+        match *self {
+            PresetIndex::One => 0,
+            PresetIndex::Two => 1,
+            PresetIndex::Three => 2,
+        }
+    }
 }
 
 /// A power-supply operating point
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct OperatingPoint {
     /// Voltage setpoint.
     pub voltage: f32,
