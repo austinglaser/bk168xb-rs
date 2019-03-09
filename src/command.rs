@@ -3,7 +3,7 @@
 //! The `Command` enum is used to encode downstream commands to a supply, and
 //! suports encoding those command for various supply types.
 
-use psu;
+use crate::psu;
 
 /// Various commands that can be sent to a supply.
 ///
@@ -230,6 +230,9 @@ impl Arg {
 }
 
 #[cfg(test)]
+use galvanic_test::test_suite;
+
+#[cfg(test)]
 test_suite! {
     name serialize;
 
@@ -237,6 +240,7 @@ test_suite! {
 
     use psu::{BK1685B, BK1687B, BK1688B, OperatingPoint, OutputState, PresetIndex};
 
+    use galvanic_assert::assert_that;
     use galvanic_assert::matchers::*;
     use std;
 

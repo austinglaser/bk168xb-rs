@@ -1,5 +1,6 @@
 [package]
 name = "bk168xb"
+edition = "2018"
 version = "0.1.0"
 authors = ["Austin Glaser <austin@boulderes.com>"]
 
@@ -7,4 +8,4 @@ authors = ["Austin Glaser <austin@boulderes.com>"]
 
 [dev-dependencies]
 galvanic-assert = "0.8.7"
-galvanic-test = "0.1.4"
+galvanic-test = "0.2.0"

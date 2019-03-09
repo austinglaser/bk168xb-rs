@@ -7,14 +7,7 @@
 //! - BK1687B (36V/10A)
 //! - BK1688B (18V/20A)
 
-#[warn(missing_docs)]
-#[cfg(test)]
-#[macro_use]
-extern crate galvanic_test;
-
-#[cfg(test)]
-#[macro_use]
-extern crate galvanic_assert;
+#![warn(missing_docs)]
 
 pub mod command;
 pub mod psu;
