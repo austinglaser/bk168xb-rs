@@ -1,231 +1,313 @@
 //! Power supply command set
-//!
-//! The `Command` enum is used to encode downstream commands to a supply, and
-//! suports encoding those command for various supply types.
 
 use crate::psu;
+use std::io;
 
-/// Various commands that can be sent to a supply.
-///
-/// This is currently just a subset, omitting all commands to do with
-/// programmable presets.
-#[derive(Debug, PartialEq)]
-pub enum Command {
-    /// Set the supply's output voltage.
-    SetVoltage(f32),
-
-    /// Set the maximum acceptable voltage.
+/// A PSU command.
+pub trait Command {
+    /// Function-discrimination part of a command.
     ///
-    /// Applies both via the control protocol, and through the front panel.
-    SetVoltageLimit(f32),
+    /// Each command starts with a four-character "function." This describes
+    /// what operation is being performed.
+    const FUNCTION: &'static str;
 
-    /// Set the supply's current limit.
-    SetCurrent(f32),
-
-    /// Set the maximum acceptable current limit.
+    /// Write a command's arguments to the specified sink.
     ///
-    /// Applies both via the control protocol, and through the front panel.
-    SetCurrentLimit(f32),
-
-    /// Turn the supply's output on or off.
-    SetOutput(psu::OutputState),
-
-    /// Configure predefined power supply operating points
-    SetPresets(
-        psu::OperatingPoint,
-        psu::OperatingPoint,
-        psu::OperatingPoint,
-    ),
-
-    /// Set current and voltage based on a predefined operating point.
-    SelectPreset(psu::PresetIndex),
-
-    /// Get the current output voltage and current
-    ///
-    /// Set through `SetVoltage` and `SetCurrent`
-    GetSettings,
-
-    /// Get the current supply status, as displayed on the front panel.
-    ///
-    /// This consists of:
-    ///
-    /// - Actual output voltage
-    /// - Actual output current
-    /// - Output mode (constant current or constant voltage)
-    GetStatus,
-
-    /// Get the maximum acceptable supply voltage.
-    ///
-    /// Set through `SetVoltageLimit`
-    GetVoltageLimit,
-
-    /// Get the maximum acceptable supply current.
-    ///
-    /// Set through `SetCurrentLimit`
-    GetCurrentLimit,
-
-    /// Determine the supply's absolute maximum voltage/current limits.
-    ///
-    /// This is unaffected by the "soft" limits imposed by `SetVoltageLimit`
-    /// and `SetCurrentLimit`.
-    GetCapabilities,
-
-    /// Get a list of the current presets.
-    GetPresets,
-}
-
-impl Command {
-    /// Get a string representation of a command.
-    ///
-    /// Trying to serialize a command that's unrepresentable (i.e. has a value
-    /// that's negative, or that would have too many digits) in the PSUs' format
-    /// will result in a panic. Note that this doesn't have anything to do with
-    /// the supply's functional limits -- only the control protocol.
+    /// The default implementation of this function serializes no arguments.
     ///
     /// # Arguments
     ///
     /// - `psu`: Provides information about per-supply serialization quirks
-    pub fn serialize(&self, psu: &psu::Info) -> String {
-        let mut serialized = self.function().to_owned();
-
-        for arg in self.args(psu) {
-            serialized.push_str(&arg.serialize());
-        }
-
-        serialized.push_str("\r");
-
-        serialized
+    /// - `sink`: Where to write arguments
+    fn serialize_args<S: io::Write>(
+        &self,
+        mut _sink: S,
+        _psu: &psu::Info,
+    ) -> io::Result<()> {
+        Ok(())
     }
 }
 
-impl Command {
-    /// Get the function-discrimination part of the command.
-    ///
-    /// Each command starts with a four-character "function."
-    fn function(&self) -> &'static str {
-        use Command::*;
-
-        match *self {
-            SetVoltage(..) => "VOLT",
-            SetVoltageLimit(..) => "SOVP",
-            SetCurrent(..) => "CURR",
-            SetCurrentLimit(..) => "SOCP",
-            SetOutput(..) => "SOUT",
-            SetPresets(..) => "PROM",
-            SelectPreset(..) => "RUNM",
-            GetSettings => "GETS",
-            GetStatus => "GETD",
-            GetVoltageLimit => "GOVP",
-            GetCurrentLimit => "GOCP",
-            GetCapabilities => "GMAX",
-            GetPresets => "GETM",
-        }
-    }
-
-    /// Get the argument for a command.
-    ///
-    /// Each supported command has some number of arguments, each consisting of
-    /// a variable number (1 or 3) of numeric digits.
+/// A command that can be serialized.
+pub trait Serialize {
+    /// Write the command to the specified sink.
     ///
     /// # Arguments
     ///
     /// - `psu`: Provides information about per-supply serialization quirks
-    fn args(&self, psu: &psu::Info) -> Vec<Arg> {
-        use Command::*;
+    /// - `sink`: Where to write arguments
+    fn serialize<S: io::Write>(
+        &self,
+        sink: S,
+        psu: &psu::Info,
+    ) -> io::Result<()>;
+}
 
-        match *self {
-            SetVoltage(volts) | SetVoltageLimit(volts) => {
-                vec![Arg::new(volts, psu.voltage_decimals(), 3)]
-            }
-            SetCurrent(amps) | SetCurrentLimit(amps) => {
-                vec![Arg::new(amps, psu.current_decimals(), 3)]
-            }
-            SetOutput(ref state) => {
-                vec![Arg::new(state.arg_val() as f32, 0, 1)]
-            }
-            SetPresets(ref p1, ref p2, ref p3) => {
-                let mut args = Vec::with_capacity(6);
+impl<C> Serialize for C
+where
+    C: Command,
+{
+    fn serialize<S: io::Write>(
+        &self,
+        mut sink: S,
+        psu: &psu::Info,
+    ) -> io::Result<()> {
+        write!(&mut sink, "{}", C::FUNCTION)?;
+        self.serialize_args(&mut sink, psu)?;
+        write!(&mut sink, "\r")?;
 
-                for preset in [p1, p2, p3].iter() {
-                    args.push(Arg::new(
-                        preset.voltage,
-                        psu.voltage_decimals(),
-                        3,
-                    ));
-                    args.push(Arg::new(
-                        preset.current,
-                        psu.current_decimals(),
-                        3,
-                    ));
-                }
-
-                args
-            }
-            SelectPreset(ref preset) => {
-                vec![Arg::new(preset.arg_val() as f32, 0, 1)]
-            }
-            GetSettings | GetStatus | GetVoltageLimit | GetCurrentLimit
-            | GetCapabilities | GetPresets => vec![],
-        }
+        Ok(())
     }
 }
 
-/// A command parameter.
-struct Arg {
-    /// The command value.
-    ///
-    /// When serialized, this is converted to an integer and rounded. No
-    /// further scaling is applied -- that's the responsibility of the
-    /// higher-level serializer.
-    ///
-    /// Must be >= 0, and <= 10^`digits` - 1
-    val: f32,
+/// Set the supply's operating voltage.
+pub struct SetVoltage(f32);
 
-    /// How many decimal places the argument has.
-    ///
-    /// For instance, if the value 12.3 is represented as `123`, this should
-    /// be 1. 0 is a valid value.
-    decimals: usize,
+impl Command for SetVoltage {
+    const FUNCTION: &'static str = "VOLT";
 
-    /// How many digits are used to represent this argument.
-    digits: usize,
-}
-
-impl Arg {
-    /// Construct a command argument.
-    ///
-    /// Panics if `val` is out of range (less than 0, or greater than
-    /// 10^`digits` - 1).
-    fn new(val: f32, decimals: usize, digits: usize) -> Arg {
-        let arg = Arg {
-            val,
-            decimals,
-            digits,
+    fn serialize_args<S: io::Write>(
+        &self,
+        mut sink: S,
+        psu: &psu::Info,
+    ) -> io::Result<()> {
+        let fmt = ArgFormat {
+            decimals: psu.voltage_decimals(),
+            digits: 3,
         };
 
-        assert!(arg.is_representable());
+        fmt.serialize_arg(&mut sink, self.0)
+    }
+}
 
-        arg
+/// Set a "soft" limit on programmable voltage.
+///
+/// This limit applies to settings via the front panel, but can be lifted via
+/// USB-serial control.
+pub struct SetVoltageLimit(f32);
+
+impl Command for SetVoltageLimit {
+    const FUNCTION: &'static str = "SOVP";
+
+    fn serialize_args<S: io::Write>(
+        &self,
+        mut sink: S,
+        psu: &psu::Info,
+    ) -> io::Result<()> {
+        let fmt = ArgFormat {
+            decimals: psu.voltage_decimals(),
+            digits: 3,
+        };
+
+        fmt.serialize_arg(&mut sink, self.0)
+    }
+}
+
+/// Set the supply's operating current.
+pub struct SetCurrent(f32);
+
+impl Command for SetCurrent {
+    const FUNCTION: &'static str = "CURR";
+
+    fn serialize_args<S: io::Write>(
+        &self,
+        mut sink: S,
+        psu: &psu::Info,
+    ) -> io::Result<()> {
+        let fmt = ArgFormat {
+            decimals: psu.current_decimals(),
+            digits: 3,
+        };
+
+        fmt.serialize_arg(&mut sink, self.0)
+    }
+}
+
+/// Set a "soft" limit on programmable current.
+///
+/// This limit applies to settings via the front panel, but can be lifted via
+/// USB-serial control.
+pub struct SetCurrentLimit(f32);
+
+impl Command for SetCurrentLimit {
+    const FUNCTION: &'static str = "SOCP";
+
+    fn serialize_args<S: io::Write>(
+        &self,
+        mut sink: S,
+        psu: &psu::Info,
+    ) -> io::Result<()> {
+        let fmt = ArgFormat {
+            decimals: psu.current_decimals(),
+            digits: 3,
+        };
+
+        fmt.serialize_arg(&mut sink, self.0)
+    }
+}
+
+/// Control whether the supply is supplying power.
+pub struct SetOutput(psu::OutputState);
+
+impl Command for SetOutput {
+    const FUNCTION: &'static str = "SOUT";
+
+    fn serialize_args<S: io::Write>(
+        &self,
+        mut sink: S,
+        _psu: &psu::Info,
+    ) -> io::Result<()> {
+        let fmt = ArgFormat {
+            decimals: 0,
+            digits: 1,
+        };
+
+        fmt.serialize_arg(&mut sink, self.0.arg_val() as f32)
+    }
+}
+
+/// Configure the supply's pre-set operating points.
+pub struct SetPresets(
+    psu::OperatingPoint,
+    psu::OperatingPoint,
+    psu::OperatingPoint,
+);
+
+impl Command for SetPresets {
+    const FUNCTION: &'static str = "PROM";
+
+    fn serialize_args<S: io::Write>(
+        &self,
+        mut sink: S,
+        psu: &psu::Info,
+    ) -> io::Result<()> {
+        let v_fmt = ArgFormat {
+            decimals: psu.voltage_decimals(),
+            digits: 3,
+        };
+
+        let i_fmt = ArgFormat {
+            decimals: psu.current_decimals(),
+            digits: 3,
+        };
+
+        v_fmt.serialize_arg(&mut sink, self.0.voltage)?;
+        i_fmt.serialize_arg(&mut sink, self.0.current)?;
+        v_fmt.serialize_arg(&mut sink, self.1.voltage)?;
+        i_fmt.serialize_arg(&mut sink, self.1.current)?;
+        v_fmt.serialize_arg(&mut sink, self.2.voltage)?;
+        i_fmt.serialize_arg(&mut sink, self.2.current)?;
+
+        Ok(())
+    }
+}
+
+/// Select a preset previously set with `SetPresets`
+pub struct SelectPreset(psu::PresetIndex);
+
+impl Command for SelectPreset {
+    const FUNCTION: &'static str = "RUNM";
+
+    fn serialize_args<S: io::Write>(
+        &self,
+        mut sink: S,
+        _psu: &psu::Info,
+    ) -> io::Result<()> {
+        let fmt = ArgFormat {
+            decimals: 0,
+            digits: 1,
+        };
+
+        fmt.serialize_arg(&mut sink, self.0.arg_val() as f32)
+    }
+}
+
+/// Get the current output voltage and current
+///
+/// Set through `SetVoltage` and `SetCurrent`
+pub struct GetSettings;
+
+impl Command for GetSettings {
+    const FUNCTION: &'static str = "GETS";
+}
+
+/// Get the current supply status, as displayed on the front panel.
+///
+/// This consists of:
+///
+/// - Actual output voltage
+/// - Actual output current
+/// - Output mode (constant current or constant voltage)
+pub struct GetStatus;
+
+impl Command for GetStatus {
+    const FUNCTION: &'static str = "GETD";
+}
+
+/// Get the maximum acceptable supply voltage.
+///
+/// Set through `SetVoltageLimit`
+pub struct GetVoltageLimit;
+
+impl Command for GetVoltageLimit {
+    const FUNCTION: &'static str = "GOVP";
+}
+
+/// Get the maximum acceptable supply current.
+///
+/// Set through `SetCurrentLimit`
+pub struct GetCurrentLimit;
+
+impl Command for GetCurrentLimit {
+    const FUNCTION: &'static str = "GOCP";
+}
+
+/// Determine the supply's absolute maximum voltage/current limits.
+///
+/// This is unaffected by the "soft" limits imposed by `SetVoltageLimit`
+/// and `SetCurrentLimit`.
+pub struct GetCapabilities;
+
+impl Command for GetCapabilities {
+    const FUNCTION: &'static str = "GMAX";
+}
+
+/// Get a list of the pre-set operating points.
+pub struct GetPresets;
+
+impl Command for GetPresets {
+    const FUNCTION: &'static str = "GETM";
+}
+
+struct ArgFormat {
+    pub decimals: usize,
+    pub digits: usize,
+}
+
+impl ArgFormat {
+    fn serialize_arg<S: io::Write>(
+        &self,
+        mut sink: S,
+        val: f32,
+    ) -> io::Result<()> {
+        if let Some(value) = self.output_val(val) {
+            write!(&mut sink, "{arg:0width$}", arg = value, width = self.digits)
+        } else {
+            Err(io::Error::new(io::ErrorKind::Other, "unrepresentable arg"))
+        }
     }
 
-    /// Get a string representation of the argument
-    fn serialize(&self) -> String {
-        format!(
-            "{arg:0width$}",
-            arg = self.output_val(),
-            width = self.digits
-        )
-    }
+    fn output_val(&self, val: f32) -> Option<u32> {
+        let multiplier = f32::powi(10., self.decimals as i32);
+        let max = (f32::powi(10., self.digits as i32) - 1.) / multiplier;
 
-    /// Determine whether the value can fit in the specified number of digits.
-    fn is_representable(&self) -> bool {
-        self.val.is_finite()
-            && self.val >= 0.
-            && self.output_val() <= 10u32.pow(self.digits as u32) - 1
-    }
+        if !val.is_finite() || val < 0. || val > max {
+            return None;
+        }
 
-    fn output_val(&self) -> u32 {
-        (self.val * f32::powi(10., self.decimals as i32)).round() as u32
+        let output_val = (val * multiplier).round() as u32;
+
+        Some(output_val)
     }
 }
 
@@ -234,188 +316,206 @@ use galvanic_test::test_suite;
 
 #[cfg(test)]
 test_suite! {
-    name serialize;
+    name test;
 
     use super::*;
 
-    use psu::{BK1685B, BK1687B, BK1688B, OperatingPoint, OutputState, PresetIndex};
+    use crate::psu::{self, BK1685B, BK1687B, BK1688B, OperatingPoint, OutputState, PresetIndex};
 
-    use galvanic_assert::assert_that;
-    use galvanic_assert::matchers::*;
-    use std;
+    use std::io::Cursor;
+    use std::str;
+
+    use galvanic_assert::{Expectation, get_expectation_for, matchers::*};
 
     test serialize_set_voltage(any_psu) {
-        let pairs = vec![
-            CommandPair { command: Command::SetVoltage(12.3), serialized: "VOLT123\r" },
-            CommandPair { command: Command::SetVoltage(0.), serialized: "VOLT000\r" },
-            CommandPair { command: Command::SetVoltage(0.1), serialized: "VOLT001\r" },
-            CommandPair { command: Command::SetVoltage(99.9), serialized: "VOLT999\r" },
-            CommandPair { command: Command::SetVoltage(8.21), serialized: "VOLT082\r" },
-            CommandPair { command: Command::SetVoltage(12.99), serialized: "VOLT130\r" },
-        ];
-
-        assert_pairs_match(pairs, any_psu.val);
+        let _e = expect_serializes_to(SetVoltage(12.3), "VOLT123\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltage(0.), "VOLT000\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltage(0.1), "VOLT001\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltage(99.9), "VOLT999\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltage(8.21), "VOLT082\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltage(12.99), "VOLT130\r", any_psu.val);
     }
 
     test cant_serialize_unrepresentable_set_voltage(any_psu, invalid_voltage) {
-        let command = Command::SetVoltage(invalid_voltage.val);
-        assert_that!(command.serialize(any_psu.val), panics);
+        assert_cant_serialize(SetVoltage(invalid_voltage.val), any_psu.val);
     }
 
     test serialize_set_voltage_limit(any_psu) {
-        let pairs = vec![
-            CommandPair { command: Command::SetVoltageLimit(12.3), serialized: "SOVP123\r" },
-            CommandPair { command: Command::SetVoltageLimit(0.), serialized: "SOVP000\r" },
-            CommandPair { command: Command::SetVoltageLimit(0.1), serialized: "SOVP001\r" },
-            CommandPair { command: Command::SetVoltageLimit(99.9), serialized: "SOVP999\r" },
-            CommandPair { command: Command::SetVoltageLimit(8.21), serialized: "SOVP082\r" },
-            CommandPair { command: Command::SetVoltageLimit(12.99), serialized: "SOVP130\r" },
-        ];
-
-        assert_pairs_match(pairs, any_psu.val);
+        let _e = expect_serializes_to(SetVoltageLimit(12.3), "SOVP123\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltageLimit(0.), "SOVP000\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltageLimit(0.1), "SOVP001\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltageLimit(99.9), "SOVP999\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltageLimit(8.21), "SOVP082\r", any_psu.val);
+        let _e = expect_serializes_to(SetVoltageLimit(12.99), "SOVP130\r", any_psu.val);
     }
 
     test cant_serialize_unrepresentable_set_voltage_limit(any_psu, invalid_voltage) {
-        let command = Command::SetVoltageLimit(invalid_voltage.val);
-        assert_that!(command.serialize(any_psu.val), panics);
+        assert_cant_serialize(SetVoltageLimit(invalid_voltage.val), any_psu.val);
     }
 
     test serialize_set_current_low_voltage(low_voltage_psu) {
-        let pairs = vec![
-            CommandPair { command: Command::SetCurrent(0.), serialized: "CURR000\r" },
-            CommandPair { command: Command::SetCurrent(0.5), serialized: "CURR005\r" },
-            CommandPair { command: Command::SetCurrent(1.5), serialized: "CURR015\r" },
-            CommandPair { command: Command::SetCurrent(1.5), serialized: "CURR015\r" },
-            CommandPair { command: Command::SetCurrent(12.3), serialized: "CURR123\r" },
-            CommandPair { command: Command::SetCurrent(99.9), serialized: "CURR999\r" },
-            CommandPair { command: Command::SetCurrent(8.21), serialized: "CURR082\r" },
-            CommandPair { command: Command::SetCurrent(12.99), serialized: "CURR130\r" },
-        ];
-
-        assert_pairs_match(pairs, low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(0.), "CURR000\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(0.5), "CURR005\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(1.5), "CURR015\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(1.5), "CURR015\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(12.3), "CURR123\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(99.9), "CURR999\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(8.21), "CURR082\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(12.99), "CURR130\r", low_voltage_psu.val);
     }
 
     test cant_serialize_unrepresentable_set_current_low_voltage(
         low_voltage_psu,
         invalid_current_low_voltage
     ) {
-        let command = Command::SetCurrent(invalid_current_low_voltage.val);
-        assert_that!(command.serialize(low_voltage_psu.val), panics);
+        assert_cant_serialize(
+            SetCurrent(invalid_current_low_voltage.val),
+            low_voltage_psu.val
+        );
     }
 
     test serialize_set_current_high_voltage(high_voltage_psu) {
-        let pairs = vec![
-            CommandPair { command: Command::SetCurrent(0.), serialized: "CURR000\r" },
-            CommandPair { command: Command::SetCurrent(0.5), serialized: "CURR050\r" },
-            CommandPair { command: Command::SetCurrent(1.55), serialized: "CURR155\r" },
-            CommandPair { command: Command::SetCurrent(2.31), serialized: "CURR231\r" },
-            CommandPair { command: Command::SetCurrent(9.99), serialized: "CURR999\r" },
-            CommandPair { command: Command::SetCurrent(0.821), serialized: "CURR082\r" },
-            CommandPair { command: Command::SetCurrent(1.299), serialized: "CURR130\r" },
-        ];
-
-        assert_pairs_match(pairs, high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(0.), "CURR000\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(0.5), "CURR050\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(1.55), "CURR155\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(2.31), "CURR231\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(9.99), "CURR999\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(0.821), "CURR082\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrent(1.299), "CURR130\r", high_voltage_psu.val);
     }
 
     test cant_serialize_unrepresentable_set_current_high_voltage(
         high_voltage_psu,
         invalid_current_high_voltage
     ) {
-        let command = Command::SetCurrent(invalid_current_high_voltage.val);
-        assert_that!(command.serialize(high_voltage_psu.val), panics);
+        assert_cant_serialize(
+            SetCurrent(invalid_current_high_voltage.val),
+            high_voltage_psu.val
+        );
     }
 
     test serialize_set_current_limit_low_voltage(low_voltage_psu) {
-        let pairs = vec![
-            CommandPair { command: Command::SetCurrentLimit(0.), serialized: "SOCP000\r" },
-            CommandPair { command: Command::SetCurrentLimit(0.5), serialized: "SOCP005\r" },
-            CommandPair { command: Command::SetCurrentLimit(1.5), serialized: "SOCP015\r" },
-            CommandPair { command: Command::SetCurrentLimit(1.5), serialized: "SOCP015\r" },
-            CommandPair { command: Command::SetCurrentLimit(12.3), serialized: "SOCP123\r" },
-            CommandPair { command: Command::SetCurrentLimit(99.9), serialized: "SOCP999\r" },
-            CommandPair { command: Command::SetCurrentLimit(8.21), serialized: "SOCP082\r" },
-            CommandPair { command: Command::SetCurrentLimit(12.99), serialized: "SOCP130\r" },
-        ];
-
-        assert_pairs_match(pairs, low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(0.), "SOCP000\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(0.5), "SOCP005\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(1.5), "SOCP015\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(1.5), "SOCP015\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(12.3), "SOCP123\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(99.9), "SOCP999\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(8.21), "SOCP082\r", low_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(12.99), "SOCP130\r", low_voltage_psu.val);
     }
 
     test cant_serialize_unrepresentable_set_current_limit_low_voltage(
         low_voltage_psu,
         invalid_current_low_voltage
     ) {
-        let command = Command::SetCurrentLimit(invalid_current_low_voltage.val);
-        assert_that!(command.serialize(low_voltage_psu.val), panics);
+        assert_cant_serialize(
+            SetCurrentLimit(invalid_current_low_voltage.val),
+            low_voltage_psu.val
+        );
     }
 
     test serialize_set_current_limit_high_voltage(high_voltage_psu) {
-        let pairs = vec![
-            CommandPair { command: Command::SetCurrentLimit(0.), serialized: "SOCP000\r" },
-            CommandPair { command: Command::SetCurrentLimit(0.5), serialized: "SOCP050\r" },
-            CommandPair { command: Command::SetCurrentLimit(1.55), serialized: "SOCP155\r" },
-            CommandPair { command: Command::SetCurrentLimit(2.31), serialized: "SOCP231\r" },
-            CommandPair { command: Command::SetCurrentLimit(9.99), serialized: "SOCP999\r" },
-            CommandPair { command: Command::SetCurrentLimit(0.821), serialized: "SOCP082\r" },
-            CommandPair { command: Command::SetCurrentLimit(1.299), serialized: "SOCP130\r" },
-        ];
-
-        assert_pairs_match(pairs, high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(0.), "SOCP000\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(0.5), "SOCP050\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(1.55), "SOCP155\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(2.31), "SOCP231\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(9.99), "SOCP999\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(0.821), "SOCP082\r", high_voltage_psu.val);
+        let _e = expect_serializes_to(SetCurrentLimit(1.299), "SOCP130\r", high_voltage_psu.val);
     }
 
     test cant_serialize_unrepresentable_set_current_limit_high_voltage(
         high_voltage_psu,
         invalid_current_high_voltage
     ) {
-        let command = Command::SetCurrentLimit(invalid_current_high_voltage.val);
-        assert_that!(command.serialize(high_voltage_psu.val), panics);
+        assert_cant_serialize(
+            SetCurrentLimit(invalid_current_high_voltage.val),
+            high_voltage_psu.val
+        );
     }
 
     test serialize_set_output(any_psu) {
-        let pairs = vec![
-            CommandPair { command: Command::SetOutput(OutputState::On), serialized: "SOUT0\r" },
-            CommandPair { command: Command::SetOutput(OutputState::Off), serialized: "SOUT1\r" },
-        ];
-
-        assert_pairs_match(pairs, any_psu.val);
+        let _e = expect_serializes_to(SetOutput(OutputState::On), "SOUT0\r", any_psu.val);
+        let _e = expect_serializes_to(SetOutput(OutputState::Off), "SOUT1\r", any_psu.val);
     }
 
     test serialize_set_presets_low_voltage(low_voltage_psu) {
-        let pairs = vec![
-            CommandPair {
-                command: Command::SetPresets(
-                    OperatingPoint { voltage: 1.1, current: 2.2 },
-                    OperatingPoint { voltage: 3.3, current: 4.4 },
-                    OperatingPoint { voltage: 5.5, current: 6.6 },
-                ),
-                serialized: "PROM011022033044055066\r",
-            },
-            CommandPair {
-                command: Command::SetPresets(
-                    OperatingPoint { voltage: 5.0, current: 1.0 },
-                    OperatingPoint { voltage: 12.5, current: 3.0 },
-                    OperatingPoint { voltage: 15.0, current: 0.5 },
-                ),
-                serialized: "PROM050010125030150005\r",
-            },
-            CommandPair {
-                command: Command::SetPresets(
-                    OperatingPoint { voltage: 0., current: 0. },
-                    OperatingPoint { voltage: 0., current: 0. },
-                    OperatingPoint { voltage: 0., current: 0. },
-                ),
-                serialized: "PROM000000000000000000\r",
-            },
-            CommandPair {
-                command: Command::SetPresets(
-                    OperatingPoint { voltage: 99.9, current: 99.9 },
-                    OperatingPoint { voltage: 99.9, current: 99.9 },
-                    OperatingPoint { voltage: 99.9, current: 99.9 },
-                ),
-                serialized: "PROM999999999999999999\r",
-            },
-        ];
+        let _e = expect_serializes_to(
+            SetPresets(
+                OperatingPoint {
+                    voltage: 1.1,
+                    current: 2.2,
+                },
+                OperatingPoint {
+                    voltage: 3.3,
+                    current: 4.4,
+                },
+                OperatingPoint {
+                    voltage: 5.5,
+                    current: 6.6,
+                },
+            ),
+            "PROM011022033044055066\r",
+            low_voltage_psu.val,
+        );
 
-        assert_pairs_match(pairs, low_voltage_psu.val);
+        let _e = expect_serializes_to(
+            SetPresets(
+                OperatingPoint {
+                    voltage: 5.0,
+                    current: 1.0,
+                },
+                OperatingPoint {
+                    voltage: 12.5,
+                    current: 3.0,
+                },
+                OperatingPoint {
+                    voltage: 15.0,
+                    current: 0.5,
+                },
+            ),
+            "PROM050010125030150005\r",
+            low_voltage_psu.val,
+        );
+
+        let _e = expect_serializes_to(
+            SetPresets(
+                OperatingPoint {
+                    voltage: 0.,
+                    current: 0.,
+                },
+                OperatingPoint {
+                    voltage: 0.,
+                    current: 0.,
+                },
+                OperatingPoint {
+                    voltage: 0.,
+                    current: 0.,
+                },
+            ),
+            "PROM000000000000000000\r",
+            low_voltage_psu.val,
+        );
+
+        let _e = expect_serializes_to(
+            SetPresets(
+                OperatingPoint {
+                    voltage: 99.9,
+                    current: 99.9,
+                },
+                OperatingPoint {
+                    voltage: 99.9,
+                    current: 99.9,
+                },
+                OperatingPoint {
+                    voltage: 99.9,
+                    current: 99.9,
+                },
+            ),
+            "PROM999999999999999999\r",
+            low_voltage_psu.val,
+        );
     }
 
     test cant_serialize_unrepresentable_set_preset_low_voltage(
@@ -423,66 +523,129 @@ test_suite! {
         invalid_current_low_voltage
     ) {
         let c = invalid_current_low_voltage.val;
-        let commands = vec![
-            Command::SetPresets(
-                OperatingPoint { voltage: 0., current: c },
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: 0. },
-            ),
-            Command::SetPresets(
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: c },
-                OperatingPoint { voltage: 0., current: 0. },
-            ),
-            Command::SetPresets(
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: c },
-            ),
-        ];
-
-        for command in commands {
-            assert_that!(command.serialize(low_voltage_psu.val), panics);
-        }
+        let invalid_p1 = SetPresets(
+            OperatingPoint {
+                voltage: 0.,
+                current: c,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+        );
+        let invalid_p2 = SetPresets(
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: c,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+        );
+        let invalid_p3 = SetPresets(
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: c,
+            },
+        );
+        let _e = expect_cant_serialize(invalid_p1, low_voltage_psu.val);
+        let _e = expect_cant_serialize(invalid_p2, low_voltage_psu.val);
+        let _e = expect_cant_serialize(invalid_p3, low_voltage_psu.val);
     }
 
     test serialize_set_presets_high_voltage(high_voltage_psu) {
-        let pairs = vec![
-            CommandPair {
-                command: Command::SetPresets(
-                    OperatingPoint { voltage: 1.1, current: 0.22 },
-                    OperatingPoint { voltage: 3.3, current: 0.44 },
-                    OperatingPoint { voltage: 5.5, current: 0.66 },
-                ),
-                serialized: "PROM011022033044055066\r",
-            },
-            CommandPair {
-                command: Command::SetPresets(
-                    OperatingPoint { voltage: 5.0, current: 1.0 },
-                    OperatingPoint { voltage: 12.5, current: 3.0 },
-                    OperatingPoint { voltage: 15.0, current: 0.55 },
-                ),
-                serialized: "PROM050100125300150055\r",
-            },
-            CommandPair {
-                command: Command::SetPresets(
-                    OperatingPoint { voltage: 0., current: 0. },
-                    OperatingPoint { voltage: 0., current: 0. },
-                    OperatingPoint { voltage: 0., current: 0. },
-                ),
-                serialized: "PROM000000000000000000\r",
-            },
-            CommandPair {
-                command: Command::SetPresets(
-                    OperatingPoint { voltage: 99.9, current: 9.99 },
-                    OperatingPoint { voltage: 99.9, current: 9.99 },
-                    OperatingPoint { voltage: 99.9, current: 9.99 },
-                ),
-                serialized: "PROM999999999999999999\r",
-            },
-        ];
+        let _e = expect_serializes_to(
+            SetPresets(
+                OperatingPoint {
+                    voltage: 1.1,
+                    current: 0.22,
+                },
+                OperatingPoint {
+                    voltage: 3.3,
+                    current: 0.44,
+                },
+                OperatingPoint {
+                    voltage: 5.5,
+                    current: 0.66,
+                },
+            ),
+            "PROM011022033044055066\r",
+            high_voltage_psu.val,
+        );
 
-        assert_pairs_match(pairs, high_voltage_psu.val);
+        let _e = expect_serializes_to(
+            SetPresets(
+                OperatingPoint {
+                    voltage: 5.0,
+                    current: 1.0,
+                },
+                OperatingPoint {
+                    voltage: 12.5,
+                    current: 3.0,
+                },
+                OperatingPoint {
+                    voltage: 15.0,
+                    current: 0.55,
+                },
+            ),
+            "PROM050100125300150055\r",
+            high_voltage_psu.val,
+        );
+
+        let _e = expect_serializes_to(
+            SetPresets(
+                OperatingPoint {
+                    voltage: 0.,
+                    current: 0.,
+                },
+                OperatingPoint {
+                    voltage: 0.,
+                    current: 0.,
+                },
+                OperatingPoint {
+                    voltage: 0.,
+                    current: 0.,
+                },
+            ),
+            "PROM000000000000000000\r",
+            high_voltage_psu.val,
+        );
+
+        let _e = expect_serializes_to(
+            SetPresets(
+                OperatingPoint {
+                    voltage: 99.9,
+                    current: 9.99,
+                },
+                OperatingPoint {
+                    voltage: 99.9,
+                    current: 9.99,
+                },
+                OperatingPoint {
+                    voltage: 99.9,
+                    current: 9.99,
+                },
+            ),
+            "PROM999999999999999999\r",
+            high_voltage_psu.val,
+        );
     }
 
     test cant_serialize_unrepresentable_set_preset_high_voltage(
@@ -490,92 +653,104 @@ test_suite! {
         invalid_current_high_voltage
     ) {
         let c = invalid_current_high_voltage.val;
-        let commands = vec![
-            Command::SetPresets(
-                OperatingPoint { voltage: 0., current: c },
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: 0. },
-            ),
-            Command::SetPresets(
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: c },
-                OperatingPoint { voltage: 0., current: 0. },
-            ),
-            Command::SetPresets(
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: c },
-            ),
-        ];
-
-        for command in commands {
-            assert_that!(command.serialize(high_voltage_psu.val), panics);
-        }
-    }
-
-    test cant_serialize_unrepresentable_set_preset_voltage(any_psu, invalid_voltage) {
-        let v = invalid_voltage.val;
-        let commands = vec![
-            Command::SetPresets(
-                OperatingPoint { voltage: v, current: 0. },
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: 0. },
-            ),
-            Command::SetPresets(
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: v, current: 0. },
-                OperatingPoint { voltage: 0., current: 0. },
-            ),
-            Command::SetPresets(
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: 0., current: 0. },
-                OperatingPoint { voltage: v, current: 0. },
-            ),
-        ];
-
-        for command in commands {
-            assert_that!(command.serialize(any_psu.val), panics);
-        }
+        let invalid_p1 = SetPresets(
+            OperatingPoint {
+                voltage: 0.,
+                current: c,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+        );
+        let invalid_p2 = SetPresets(
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: c,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+        );
+        let invalid_p3 = SetPresets(
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: 0.,
+            },
+            OperatingPoint {
+                voltage: 0.,
+                current: c,
+            },
+        );
+        let _e = expect_cant_serialize(invalid_p1, high_voltage_psu.val);
+        let _e = expect_cant_serialize(invalid_p2, high_voltage_psu.val);
+        let _e = expect_cant_serialize(invalid_p3, high_voltage_psu.val);
     }
 
     test serialize_select_preset(any_psu) {
-        let pairs = vec![
-            CommandPair { command: Command::SelectPreset(PresetIndex::One), serialized: "RUNM0\r" },
-            CommandPair { command: Command::SelectPreset(PresetIndex::Two), serialized: "RUNM1\r" },
-            CommandPair { command: Command::SelectPreset(PresetIndex::Three), serialized: "RUNM2\r" },
-        ];
-
-        assert_pairs_match(pairs, any_psu.val);
+        let _e = expect_serializes_to(SelectPreset(PresetIndex::One), "RUNM0\r", any_psu.val);
+        let _e = expect_serializes_to(SelectPreset(PresetIndex::Two), "RUNM1\r", any_psu.val);
+        let _e = expect_serializes_to(SelectPreset(PresetIndex::Three), "RUNM2\r", any_psu.val);
     }
 
     test serialize_get_settings(any_psu) {
-        let command = Command::GetSettings;
-        assert_that!(&command.serialize(any_psu.val), eq("GETS\r".to_owned()));
+        assert_serializes_to(GetSettings, "GETS\r", any_psu.val);
     }
 
     test serialize_get_status(any_psu) {
-        let command = Command::GetStatus;
-        assert_that!(&command.serialize(any_psu.val), eq("GETD\r".to_owned()));
+        assert_serializes_to(GetStatus, "GETD\r", any_psu.val);
     }
 
     test serialize_get_voltage_limit(any_psu) {
-        let command = Command::GetVoltageLimit;
-        assert_that!(&command.serialize(any_psu.val), eq("GOVP\r".to_owned()));
+        assert_serializes_to(GetVoltageLimit, "GOVP\r", any_psu.val);
     }
 
     test serialize_get_current_limit(any_psu) {
-        let command = Command::GetCurrentLimit;
-        assert_that!(&command.serialize(any_psu.val), eq("GOCP\r".to_owned()));
+        assert_serializes_to(GetCurrentLimit, "GOCP\r", any_psu.val);
     }
 
     test serialize_get_capabilities(any_psu) {
-        let command = Command::GetCapabilities;
-        assert_that!(&command.serialize(any_psu.val), eq("GMAX\r".to_owned()));
+        assert_serializes_to(GetCapabilities, "GMAX\r", any_psu.val);
     }
 
     test serialize_get_presets(any_psu) {
-        let command = Command::GetPresets;
-        assert_that!(&command.serialize(any_psu.val), eq("GETM\r".to_owned()));
+        assert_serializes_to(GetPresets, "GETM\r", any_psu.val);
+    }
+
+    fn assert_cant_serialize<C: Command>(command: C, psu: &psu::Info) {
+        expect_cant_serialize(command, psu).verify();
+    }
+
+    fn expect_cant_serialize<C: Command>(command: C, psu: &psu::Info) -> Expectation {
+        let mut sink = Cursor::new(Vec::new());
+
+        get_expectation_for!(&command.serialize(&mut sink, psu).is_err(), eq(true))
+    }
+
+    fn assert_serializes_to<C: Command>(command: C, result: &str, psu: &psu::Info) {
+        expect_serializes_to(command, result, psu).verify();
+    }
+
+    fn expect_serializes_to<C: Command>(command: C, result: &str, psu: &psu::Info) -> Expectation {
+        let mut sink = Cursor::new(Vec::new());
+
+        command.serialize(&mut sink, psu).unwrap();
+        let written = str::from_utf8(sink.get_ref()).unwrap();
+
+        get_expectation_for!(&written, eq(result))
     }
 
     fixture any_psu(psu: &'static psu::Info) -> &'static psu::Info {
@@ -654,17 +829,6 @@ test_suite! {
         }
         setup (&mut self) {
             *self.current
-        }
-    }
-
-    struct CommandPair {
-        command: Command,
-        serialized: &'static str,
-    }
-
-    fn assert_pairs_match(pairs: Vec<CommandPair>, psu: &psu::Info) {
-        for pair in pairs {
-            assert_that!(&pair.command.serialize(psu), eq(pair.serialized.to_owned()));
         }
     }
 }

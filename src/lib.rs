@@ -11,5 +11,3 @@
 
 pub mod command;
 pub mod psu;
-
-pub use command::Command;
