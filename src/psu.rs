@@ -30,7 +30,7 @@ impl OutputState {
     ///
     /// N.B.: This field has inverted logic in commands -- it uses 0 for on, and
     /// 1 for off.
-    pub fn arg_val(&self) -> usize {
+    pub(crate) fn arg_val(&self) -> usize {
         match *self {
             OutputState::On => 0,
             OutputState::Off => 1,
@@ -55,7 +55,7 @@ impl PresetIndex {
     /// Get a concrete index integer for this preset.
     ///
     /// Appropriate for use in commands, or for indexing preset arrays.
-    pub fn arg_val(&self) -> usize {
+    pub(crate) fn arg_val(&self) -> usize {
         match *self {
             PresetIndex::One => 0,
             PresetIndex::Two => 1,
