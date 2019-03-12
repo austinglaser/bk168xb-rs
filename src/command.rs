@@ -755,11 +755,7 @@ test_suite! {
 
     fixture any_psu(psu: &'static psu::Info) -> &'static psu::Info {
         params {
-            vec![
-                &BK1685B as &psu::Info,
-                &BK1687B as &psu::Info,
-                &BK1688B as &psu::Info,
-            ].into_iter()
+            vec![&BK1685B, &BK1687B, &BK1688B].into_iter()
         }
         setup(&mut self) {
             *self.psu
@@ -768,10 +764,7 @@ test_suite! {
 
     fixture low_voltage_psu(psu: &'static psu::Info) -> &'static psu::Info {
         params {
-            vec![
-                &BK1687B as &psu::Info,
-                &BK1688B as &psu::Info
-            ].into_iter()
+            vec![&BK1687B, &BK1688B].into_iter()
         }
         setup(&mut self) {
             *self.psu
@@ -780,7 +773,7 @@ test_suite! {
 
     fixture high_voltage_psu() -> &'static psu::Info {
         setup(&mut self) {
-            &BK1685B as &psu::Info
+            &BK1685B
         }
     }
 
