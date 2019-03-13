@@ -1,5 +1,4 @@
 ///! Error handling for BK commands
-
 use std::error;
 use std::fmt;
 use std::io;
