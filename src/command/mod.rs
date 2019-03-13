@@ -3,6 +3,7 @@
 use crate::psu;
 use std::io;
 
+mod error;
 mod get;
 mod select_preset;
 mod set_current;
@@ -12,6 +13,7 @@ mod set_presets;
 mod set_voltage;
 mod set_voltage_limit;
 
+pub use error::*;
 pub use get::{
     GetCapabilities, GetCurrentLimit, GetPresets, GetSettings, GetStatus,
     GetVoltageLimit,
@@ -44,7 +46,7 @@ pub trait Command {
         &self,
         mut _sink: S,
         _psu: &psu::Info,
-    ) -> io::Result<()> {
+    ) -> Result<()> {
         Ok(())
     }
 }
@@ -57,11 +59,7 @@ pub trait Serialize {
     ///
     /// - `psu`: Provides information about per-supply serialization quirks
     /// - `sink`: Where to write arguments
-    fn serialize<S: io::Write>(
-        &self,
-        sink: S,
-        psu: &psu::Info,
-    ) -> io::Result<()>;
+    fn serialize<S: io::Write>(&self, sink: S, psu: &psu::Info) -> Result<()>;
 }
 
 impl<C> Serialize for C
@@ -72,7 +70,7 @@ where
         &self,
         mut sink: S,
         psu: &psu::Info,
-    ) -> io::Result<()> {
+    ) -> Result<()> {
         write!(&mut sink, "{}", C::FUNCTION)?;
         self.serialize_args(&mut sink, psu)?;
         write!(&mut sink, "\r")?;
@@ -87,15 +85,18 @@ struct ArgFormat {
 }
 
 impl ArgFormat {
-    fn serialize_arg<S: io::Write>(
-        &self,
-        mut sink: S,
-        val: f32,
-    ) -> io::Result<()> {
+    fn serialize_arg<S: io::Write>(&self, mut sink: S, val: f32) -> Result<()> {
         if let Some(value) = self.output_val(val) {
-            write!(&mut sink, "{arg:0width$}", arg = value, width = self.digits)
+            write!(
+                &mut sink,
+                "{arg:0width$}",
+                arg = value,
+                width = self.digits,
+            )?;
+
+            Ok(())
         } else {
-            Err(io::Error::new(io::ErrorKind::Other, "unrepresentable arg"))
+            Err(Error::ValueUnrepresentable(val))
         }
     }
 
@@ -119,7 +120,10 @@ pub mod test_util {
 
     use crate::psu;
 
-    use galvanic_assert::{get_expectation_for, matchers::*, Expectation};
+    use galvanic_assert::{
+        get_expectation_for, matchers::*, Expectation, MatchResult,
+        MatchResultBuilder,
+    };
 
     use std::io::Cursor;
     use std::str;
@@ -135,9 +139,24 @@ pub mod test_util {
         let mut sink = Cursor::new(Vec::new());
 
         get_expectation_for!(
-            &command.serialize(&mut sink, psu).is_err(),
-            eq(true)
+            &command.serialize(&mut sink, psu),
+            is_unrepresentable_val_error
         )
+    }
+
+    fn is_unrepresentable_val_error<T>(res: &Result<T>) -> MatchResult {
+        let builder =
+            MatchResultBuilder::for_("is unrepresentable value error");
+
+        if let Err(ref e) = *res {
+            if let Error::ValueUnrepresentable(_) = *e {
+                builder.matched()
+            } else {
+                builder.failed_because("wrong type of error")
+            }
+        } else {
+            builder.failed_because("not an error")
+        }
     }
 
     pub fn assert_serializes_to<C: Command>(

@@ -1,6 +1,6 @@
 //! Command for controlling supply output state.
 
-use crate::command::{ArgFormat, Command};
+use crate::command::{self, ArgFormat, Command};
 use crate::psu;
 
 use std::io;
@@ -15,7 +15,7 @@ impl Command for SetOutput {
         &self,
         mut sink: S,
         _psu: &psu::Info,
-    ) -> io::Result<()> {
+    ) -> command::Result<()> {
         let fmt = ArgFormat {
             decimals: 0,
             digits: 1,

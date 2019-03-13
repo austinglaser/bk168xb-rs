@@ -1,6 +1,6 @@
 //! Command for setting supply operating current
 
-use crate::command::{ArgFormat, Command};
+use crate::command::{self, ArgFormat, Command};
 use crate::psu;
 
 use std::io;
@@ -15,7 +15,7 @@ impl Command for SetCurrent {
         &self,
         mut sink: S,
         psu: &psu::Info,
-    ) -> io::Result<()> {
+    ) -> command::Result<()> {
         let fmt = ArgFormat {
             decimals: psu.current_decimals(),
             digits: 3,

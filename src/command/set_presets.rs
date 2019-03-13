@@ -1,6 +1,6 @@
 //! Command for setting a predefined set of operating points.
 
-use crate::command::{ArgFormat, Command};
+use crate::command::{self, ArgFormat, Command};
 use crate::psu;
 
 use std::io;
@@ -19,7 +19,7 @@ impl Command for SetPresets {
         &self,
         mut sink: S,
         psu: &psu::Info,
-    ) -> io::Result<()> {
+    ) -> command::Result<()> {
         let v_fmt = ArgFormat {
             decimals: psu.voltage_decimals(),
             digits: 3,
