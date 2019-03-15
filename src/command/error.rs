@@ -5,52 +5,52 @@ use std::io;
 
 /// Errors that can arise from `Command` functions.
 #[derive(Debug)]
-pub enum Error {
+pub enum CommandError {
     /// The command contained a value which is invalid for its format.
     ValueUnrepresentable(f32),
 
     /// The sink returned an error while writing the command.
-    SerializationFailure(io::Error),
+    WriteFailure(io::Error),
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for CommandError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
+        use CommandError::*;
 
         match *self {
             ValueUnrepresentable(v) => {
                 write!(f, "unrepresentable value: {}", v)
             }
-            SerializationFailure(_) => write!(f, "could not serialize command"),
+            WriteFailure(_) => write!(f, "could not serialize command"),
         }
     }
 }
 
-impl error::Error for Error {
+impl error::Error for CommandError {
     fn description(&self) -> &str {
-        use Error::*;
+        use CommandError::*;
 
         match *self {
             ValueUnrepresentable(_) => "unrepresentable value",
-            SerializationFailure(_) => "serialization falure",
+            WriteFailure(_) => "serialization falure",
         }
     }
 
     fn cause(&self) -> Option<&error::Error> {
-        use Error::*;
+        use CommandError::*;
 
         match *self {
             ValueUnrepresentable(_) => None,
-            SerializationFailure(ref io) => Some(io),
+            WriteFailure(ref io) => Some(io),
         }
     }
 }
 
-impl From<io::Error> for Error {
+impl From<io::Error> for CommandError {
     fn from(io: io::Error) -> Self {
-        Error::SerializationFailure(io)
+        CommandError::WriteFailure(io)
     }
 }
 
 /// A specialeized `Result` type for `Command` operations.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, CommandError>;

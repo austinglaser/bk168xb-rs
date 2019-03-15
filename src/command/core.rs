@@ -1,4 +1,4 @@
-use crate::command::{Error, Result};
+use crate::command::{CommandError, Result};
 use crate::psu;
 
 use std::io;
@@ -77,7 +77,7 @@ impl ArgFormat {
 
             Ok(())
         } else {
-            Err(Error::ValueUnrepresentable(val))
+            Err(CommandError::ValueUnrepresentable(val))
         }
     }
 
