@@ -21,5 +21,5 @@ impl From<io::Error> for CommandError {
     }
 }
 
-/// A specialeized `Result` type for `Command` operations.
+/// A specialized `Result` type for `Command` operations.
 pub type Result<T> = std::result::Result<T, CommandError>;

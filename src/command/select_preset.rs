@@ -36,7 +36,7 @@ test_suite! {
 
     use crate::command::test_util::expect_serializes_to;
     use crate::psu::PresetIndex;
-    use crate::psu::test::any_psu;
+    use crate::psu::test_util::any_psu;
 
     test serialize_select_preset(any_psu) {
         let _e = expect_serializes_to(

@@ -55,8 +55,8 @@ test_suite! {
         expect_cant_serialize,
     };
     use crate::psu::OperatingPoint;
-    use crate::psu::test::{any_psu, high_voltage_psu, low_voltage_psu};
-    use crate::psu::test::{
+    use crate::psu::test_util::{any_psu, high_voltage_psu, low_voltage_psu};
+    use crate::psu::test_util::{
         invalid_current_high_voltage,
         invalid_current_low_voltage,
         invalid_voltage,

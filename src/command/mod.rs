@@ -12,19 +12,15 @@ mod set_voltage;
 mod set_voltage_limit;
 
 #[cfg(test)]
-pub mod test_util;
+pub(crate) mod test_util;
 
 pub use self::core::*;
 pub use self::error::*;
-
-pub use self::get::{
-    GetCapabilities, GetCurrentLimit, GetPresets, GetSettings, GetStatus,
-    GetVoltageLimit,
-};
-pub use self::select_preset::SelectPreset;
-pub use self::set_current::SetCurrent;
-pub use self::set_current_limit::SetCurrentLimit;
-pub use self::set_output::SetOutput;
-pub use self::set_presets::SetPresets;
-pub use self::set_voltage::SetVoltage;
-pub use self::set_voltage_limit::SetVoltageLimit;
+pub use self::get::*;
+pub use self::select_preset::*;
+pub use self::set_current::*;
+pub use self::set_current_limit::*;
+pub use self::set_output::*;
+pub use self::set_presets::*;
+pub use self::set_voltage::*;
+pub use self::set_voltage_limit::*;

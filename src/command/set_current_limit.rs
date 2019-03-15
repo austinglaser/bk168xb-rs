@@ -40,8 +40,8 @@ test_suite! {
         expect_serializes_to,
         assert_cant_serialize,
     };
-    use crate::psu::test::{high_voltage_psu, low_voltage_psu};
-    use crate::psu::test::{
+    use crate::psu::test_util::{high_voltage_psu, low_voltage_psu};
+    use crate::psu::test_util::{
         invalid_current_high_voltage,
         invalid_current_low_voltage
     };

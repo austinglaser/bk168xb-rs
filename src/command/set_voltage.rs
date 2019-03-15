@@ -38,7 +38,7 @@ test_suite! {
         expect_serializes_to,
         assert_cant_serialize,
     };
-    use crate::psu::test::{any_psu, invalid_voltage};
+    use crate::psu::test_util::{any_psu, invalid_voltage};
 
     test can_serialize(any_psu) {
         let psu = any_psu.val;
