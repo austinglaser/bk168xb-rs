@@ -7,7 +7,8 @@
 //! - BK1687B (36V/10A)
 //! - BK1688B (18V/20A)
 
-#![warn(missing_docs)]
+//#![warn(missing_docs)]
 
 pub mod command;
 pub mod psu;
+pub mod response;
