@@ -1,49 +1,18 @@
-///! Error handling for BK commands
-use std::error;
-use std::fmt;
+//! Error handling for BK commands
+use err_derive::Error;
+
 use std::io;
 
 /// Errors that can arise from `Command` functions.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum CommandError {
     /// The command contained a value which is invalid for its format.
+    #[error(display = "unrepresentable value in command: {}", _0)]
     ValueUnrepresentable(f32),
 
     /// The sink returned an error while writing the command.
-    WriteFailure(io::Error),
-}
-
-impl fmt::Display for CommandError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use CommandError::*;
-
-        match *self {
-            ValueUnrepresentable(v) => {
-                write!(f, "unrepresentable value: {}", v)
-            }
-            WriteFailure(_) => write!(f, "could not serialize command"),
-        }
-    }
-}
-
-impl error::Error for CommandError {
-    fn description(&self) -> &str {
-        use CommandError::*;
-
-        match *self {
-            ValueUnrepresentable(_) => "unrepresentable value",
-            WriteFailure(_) => "serialization falure",
-        }
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        use CommandError::*;
-
-        match *self {
-            ValueUnrepresentable(_) => None,
-            WriteFailure(ref io) => Some(io),
-        }
-    }
+    #[error(display = "failed to write command")]
+    WriteFailure(#[error(cause)] io::Error),
 }
 
 impl From<io::Error> for CommandError {
