@@ -67,18 +67,12 @@ impl ArgFormat {
         mut sink: S,
         val: f32,
     ) -> Result<()> {
-        if let Some(value) = self.output_val(val) {
-            write!(
-                &mut sink,
-                "{arg:0width$}",
-                arg = value,
-                width = self.digits,
-            )?;
+        use CommandError::ValueUnrepresentable;
 
-            Ok(())
-        } else {
-            Err(CommandError::ValueUnrepresentable(val))
-        }
+        let value = self.output_val(val).ok_or(ValueUnrepresentable(val))?;
+        write!(&mut sink, "{arg:0width$}", arg = value, width = self.digits)?;
+
+        Ok(())
     }
 
     pub(crate) fn output_val(&self, val: f32) -> Option<u32> {
