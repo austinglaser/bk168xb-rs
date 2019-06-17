@@ -17,7 +17,7 @@ impl Command for SetCurrent {
         psu: &psu::Info,
     ) -> command::Result<()> {
         let fmt = ArgFormat {
-            decimals: psu.current_decimals(),
+            decimals: psu.current_decimals,
             digits: 3,
         };
 

@@ -19,7 +19,7 @@ impl Command for SetVoltageLimit {
         psu: &psu::Info,
     ) -> command::Result<()> {
         let fmt = ArgFormat {
-            decimals: psu.voltage_decimals(),
+            decimals: psu.voltage_decimals,
             digits: 3,
         };
 

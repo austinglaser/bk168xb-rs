@@ -79,22 +79,10 @@ pub struct OperatingPoint {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Info {
     /// The number of decimal places in commands encoding current.
-    current_decimals: usize,
+    pub current_decimals: usize,
 
     /// The number of decimal places in commands encoding voltage.
-    voltage_decimals: usize,
-}
-
-impl Info {
-    /// Get the number of decimal places in commands encoding current.
-    pub fn current_decimals(&self) -> usize {
-        self.current_decimals
-    }
-
-    /// Get the number of decimal places in commands encoding voltage.
-    pub fn voltage_decimals(&self) -> usize {
-        self.voltage_decimals
-    }
+    pub voltage_decimals: usize,
 }
 
 /// Power supply information for the 1685B (60V / 5A) model

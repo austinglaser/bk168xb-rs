@@ -21,12 +21,12 @@ impl Command for SetPresets {
         psu: &psu::Info,
     ) -> command::Result<()> {
         let v_fmt = ArgFormat {
-            decimals: psu.voltage_decimals(),
+            decimals: psu.voltage_decimals,
             digits: 3,
         };
 
         let i_fmt = ArgFormat {
-            decimals: psu.current_decimals(),
+            decimals: psu.current_decimals,
             digits: 3,
         };
 
