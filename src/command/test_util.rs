@@ -19,7 +19,7 @@ pub fn expect_cant_serialize<C: Command>(
     command: C,
     psu: &psu::Info,
 ) -> Expectation {
-    let mut sink = Cursor::new(Vec::new());
+    let mut sink = Vec::new();
 
     get_expectation_for!(
         &command.serialize(&mut sink, psu),
@@ -54,10 +54,10 @@ pub fn expect_serializes_to<C: Command>(
     result: &str,
     psu: &psu::Info,
 ) -> Expectation {
-    let mut sink = Cursor::new(Vec::new());
+    let mut sink = Vec::new();
 
     command.serialize(&mut sink, psu).unwrap();
-    let written = str::from_utf8(sink.get_ref()).unwrap();
+    let written = str::from_utf8(&sink).unwrap();
 
     get_expectation_for!(&written, eq(result))
 }
