@@ -1,5 +1,7 @@
-use crate::command::{CommandError, Result};
-use crate::psu;
+use crate::{
+    command::{CommandError, Result},
+    psu,
+};
 
 use std::io;
 

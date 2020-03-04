@@ -1,7 +1,9 @@
 //! Command for selecting an operating point from memory.
 
-use crate::command::{self, ArgFormat, Command};
-use crate::psu;
+use crate::{
+    command::{self, ArgFormat, Command},
+    psu,
+};
 
 use std::io;
 

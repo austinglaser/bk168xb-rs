@@ -1,7 +1,9 @@
 //! Assertions specific to dealing with BK168xB commands.
 
-use crate::command::{Command, CommandError, Result, Serialize};
-use crate::psu;
+use crate::{
+    command::{Command, CommandError, Result, Serialize},
+    psu,
+};
 
 use galvanic_assert::{
     get_expectation_for, matchers::*, Expectation, MatchResult,

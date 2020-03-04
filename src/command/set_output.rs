@@ -1,7 +1,9 @@
 //! Command for controlling supply output state.
 
-use crate::command::{self, ArgFormat, Command};
-use crate::psu;
+use crate::{
+    command::{self, ArgFormat, Command},
+    psu,
+};
 
 use std::io;
 

@@ -14,13 +14,8 @@ mod set_voltage_limit;
 #[cfg(test)]
 pub(crate) mod test_util;
 
-pub use self::core::*;
-pub use self::error::*;
-pub use self::get::*;
-pub use self::select_preset::*;
-pub use self::set_current::*;
-pub use self::set_current_limit::*;
-pub use self::set_output::*;
-pub use self::set_presets::*;
-pub use self::set_voltage::*;
-pub use self::set_voltage_limit::*;
+pub use self::{
+    core::*, error::*, get::*, select_preset::*, set_current::*,
+    set_current_limit::*, set_output::*, set_presets::*, set_voltage::*,
+    set_voltage_limit::*,
+};
