@@ -15,7 +15,7 @@ impl Command for SetVoltageLimit {
 
     fn serialize_args<S: io::Write>(
         &self,
-        mut sink: S,
+        sink: &mut S,
         psu: &psu::Info,
     ) -> command::Result<()> {
         let fmt = ArgFormat {
@@ -23,7 +23,7 @@ impl Command for SetVoltageLimit {
             digits: 3,
         };
 
-        fmt.serialize_arg(&mut sink, self.0)
+        fmt.serialize_arg(sink, self.0)
     }
 }
 

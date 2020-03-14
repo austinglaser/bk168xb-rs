@@ -23,7 +23,7 @@ pub trait Command {
     /// - `sink`: Where to write arguments
     fn serialize_args<S: io::Write>(
         &self,
-        mut sink: S,
+        sink: &mut S,
         psu: &psu::Info,
     ) -> Result<()> {
         let _ = (sink, psu);
@@ -32,29 +32,30 @@ pub trait Command {
     }
 }
 
-/// A command that can be serialized.
-pub trait Serialize {
-    /// Write the command to the specified sink.
+/// A target for command serialization.
+pub trait CommandSink {
+    /// Write the command to a sink.
     ///
     /// # Arguments
     ///
+    /// - `command`: Command to send
     /// - `psu`: Provides information about per-supply serialization quirks
-    /// - `sink`: Where to write arguments
-    fn serialize<S: io::Write>(&self, sink: S, psu: &psu::Info) -> Result<()>;
+    fn send_command<C: Command>(
+        &mut self,
+        command: &C,
+        psu: &psu::Info,
+    ) -> Result<()>;
 }
 
-impl<C> Serialize for C
-where
-    C: Command,
-{
-    fn serialize<S: io::Write>(
-        &self,
-        mut sink: S,
+impl<S: io::Write> CommandSink for S {
+    fn send_command<C: Command>(
+        &mut self,
+        command: &C,
         psu: &psu::Info,
     ) -> Result<()> {
-        write!(&mut sink, "{}", C::FUNCTION)?;
-        self.serialize_args(&mut sink, psu)?;
-        write!(&mut sink, "\r")?;
+        write!(self, "{}", C::FUNCTION)?;
+        command.serialize_args(self, psu)?;
+        write!(self, "\r")?;
 
         Ok(())
     }
@@ -68,13 +69,13 @@ pub(crate) struct ArgFormat {
 impl ArgFormat {
     pub(crate) fn serialize_arg<S: io::Write>(
         &self,
-        mut sink: S,
+        sink: &mut S,
         val: f32,
     ) -> Result<()> {
         use CommandError::ValueUnrepresentable;
 
         let value = self.output_val(val).ok_or(ValueUnrepresentable(val))?;
-        write!(&mut sink, "{arg:0width$}", arg = value, width = self.digits)?;
+        write!(sink, "{arg:0width$}", arg = value, width = self.digits)?;
 
         Ok(())
     }

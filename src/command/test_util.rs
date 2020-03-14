@@ -1,7 +1,7 @@
 //! Assertions specific to dealing with BK168xB commands.
 
 use crate::{
-    command::{Command, CommandError, Result, Serialize},
+    command::{Command, CommandError, CommandSink, Result},
     psu,
 };
 
@@ -23,7 +23,7 @@ pub fn expect_cant_serialize<C: Command>(
     let mut sink = Vec::new();
 
     get_expectation_for!(
-        &command.serialize(&mut sink, psu),
+        &sink.send_command(&command, psu),
         is_unrepresentable_val_error
     )
 }
@@ -57,7 +57,7 @@ pub fn expect_serializes_to<C: Command>(
 ) -> Expectation {
     let mut sink = Vec::new();
 
-    command.serialize(&mut sink, psu).unwrap();
+    sink.send_command(&command, psu).unwrap();
     let written = str::from_utf8(&sink).unwrap();
 
     get_expectation_for!(&written, eq(result))

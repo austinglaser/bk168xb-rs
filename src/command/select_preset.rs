@@ -15,7 +15,7 @@ impl Command for SelectPreset {
 
     fn serialize_args<S: io::Write>(
         &self,
-        mut sink: S,
+        sink: &mut S,
         _psu: &psu::Info,
     ) -> command::Result<()> {
         let fmt = ArgFormat {
@@ -23,7 +23,7 @@ impl Command for SelectPreset {
             digits: 1,
         };
 
-        fmt.serialize_arg(&mut sink, self.0.arg_val() as f32)
+        fmt.serialize_arg(sink, self.0.arg_val() as f32)
     }
 }
 

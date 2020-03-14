@@ -19,7 +19,7 @@ impl Command for SetPresets {
 
     fn serialize_args<S: io::Write>(
         &self,
-        mut sink: S,
+        sink: &mut S,
         psu: &psu::Info,
     ) -> command::Result<()> {
         let v_fmt = ArgFormat {
@@ -32,12 +32,12 @@ impl Command for SetPresets {
             digits: 3,
         };
 
-        v_fmt.serialize_arg(&mut sink, self.0.voltage)?;
-        i_fmt.serialize_arg(&mut sink, self.0.current)?;
-        v_fmt.serialize_arg(&mut sink, self.1.voltage)?;
-        i_fmt.serialize_arg(&mut sink, self.1.current)?;
-        v_fmt.serialize_arg(&mut sink, self.2.voltage)?;
-        i_fmt.serialize_arg(&mut sink, self.2.current)?;
+        v_fmt.serialize_arg(sink, self.0.voltage)?;
+        i_fmt.serialize_arg(sink, self.0.current)?;
+        v_fmt.serialize_arg(sink, self.1.voltage)?;
+        i_fmt.serialize_arg(sink, self.1.current)?;
+        v_fmt.serialize_arg(sink, self.2.voltage)?;
+        i_fmt.serialize_arg(sink, self.2.current)?;
 
         Ok(())
     }
