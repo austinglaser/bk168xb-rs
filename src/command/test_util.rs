@@ -10,7 +10,6 @@ use galvanic_assert::{
     MatchResultBuilder,
 };
 
-use std::io::Cursor;
 use std::str;
 
 pub fn assert_cant_serialize<C: Command>(command: C, psu: &psu::Info) {
