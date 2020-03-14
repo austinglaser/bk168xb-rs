@@ -1,5 +1,5 @@
 //! Error handling for BK commands
-use err_derive::Error;
+use thiserror::Error;
 
 use std::io;
 
@@ -7,12 +7,12 @@ use std::io;
 #[derive(Debug, Error)]
 pub enum CommandError {
     /// The command contained a value which is invalid for its format.
-    #[error(display = "unrepresentable value in command: {}", _0)]
+    #[error("unrepresentable value in command: {0}")]
     ValueUnrepresentable(f32),
 
     /// The sink returned an error while writing the command.
-    #[error(display = "failed to write command")]
-    WriteFailure(#[error(cause)] io::Error),
+    #[error("failed to write command")]
+    WriteFailure(#[source] io::Error),
 }
 
 impl From<io::Error> for CommandError {
