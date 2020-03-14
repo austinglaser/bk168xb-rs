@@ -23,9 +23,11 @@ pub trait Command {
     /// - `sink`: Where to write arguments
     fn serialize_args<S: io::Write>(
         &self,
-        mut _sink: S,
-        _psu: &psu::Info,
+        mut sink: S,
+        psu: &psu::Info,
     ) -> Result<()> {
+        let _ = (sink, psu);
+
         Ok(())
     }
 }
