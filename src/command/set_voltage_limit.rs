@@ -1,6 +1,9 @@
 ///! Command for setting a "soft" voltage limit.
-use crate::command::{self, ArgFormat, Command};
-use crate::psu;
+use crate::{
+    command::{self, Command},
+    psu,
+    psu::ArgFormat,
+};
 
 use std::io;
 

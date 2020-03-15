@@ -1,8 +1,9 @@
 //! Command for setting supply operating current
 
 use crate::{
-    command::{self, ArgFormat, Command},
+    command::{self, Command},
     psu,
+    psu::ArgFormat,
 };
 
 use std::io;

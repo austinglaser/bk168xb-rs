@@ -1,7 +1,4 @@
-use crate::{
-    command::{CommandError, Result},
-    psu,
-};
+use crate::{command::Result, psu};
 
 use std::io;
 
@@ -58,38 +55,5 @@ impl<S: io::Write> CommandSink for S {
         write!(self, "\r")?;
 
         Ok(())
-    }
-}
-
-pub(crate) struct ArgFormat {
-    pub decimals: usize,
-    pub digits: usize,
-}
-
-impl ArgFormat {
-    pub(crate) fn serialize_arg<S: io::Write>(
-        &self,
-        sink: &mut S,
-        val: f32,
-    ) -> Result<()> {
-        use CommandError::ValueUnrepresentable;
-
-        let value = self.output_val(val).ok_or(ValueUnrepresentable(val))?;
-        write!(sink, "{arg:0width$}", arg = value, width = self.digits)?;
-
-        Ok(())
-    }
-
-    pub(crate) fn output_val(&self, val: f32) -> Option<u32> {
-        let multiplier = f32::powi(10., self.decimals as i32);
-        let max = (f32::powi(10., self.digits as i32) - 1.) / multiplier;
-
-        if !val.is_finite() || val < 0. || val > max {
-            return None;
-        }
-
-        let output_val = (val * multiplier).round() as u32;
-
-        Some(output_val)
     }
 }

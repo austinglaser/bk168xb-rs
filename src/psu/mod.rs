@@ -16,6 +16,10 @@
 #[cfg(test)]
 pub mod test_util;
 
+use crate::command;
+
+use std::io;
+
 /// Output state of the supply.
 #[derive(Debug, PartialEq)]
 pub enum OutputState {
@@ -102,3 +106,41 @@ pub const BK1688B: Info = Info {
     current_decimals: 1,
     voltage_decimals: 1,
 };
+
+pub(crate) struct ArgFormat {
+    pub decimals: usize,
+    pub digits: usize,
+}
+
+impl ArgFormat {
+    pub(crate) fn serialize_arg<S: io::Write>(
+        &self,
+        sink: &mut S,
+        val: f32,
+    ) -> command::Result<()> {
+        use command::CommandError::ValueUnrepresentable;
+
+        let value = self.output_val(val).ok_or(ValueUnrepresentable(val))?;
+        write!(sink, "{arg:0width$}", arg = value, width = self.digits)?;
+
+        Ok(())
+    }
+
+    fn output_val(&self, val: f32) -> Option<u32> {
+        if !val.is_finite() || val < 0. || val > self.max() {
+            return None;
+        }
+
+        let output_val = (val * self.factor()).round() as u32;
+
+        Some(output_val)
+    }
+
+    fn factor(&self) -> f32 {
+        f32::powi(10., self.decimals as i32)
+    }
+
+    fn max(&self) -> f32 {
+        (f32::powi(10., self.digits as i32) - 1.) / self.factor()
+    }
+}

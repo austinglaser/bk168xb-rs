@@ -1,8 +1,9 @@
 //! Command for setting a predefined set of operating points.
 
 use crate::{
-    command::{self, ArgFormat, Command},
+    command::{self, Command},
     psu,
+    psu::ArgFormat,
 };
 
 use std::io;
