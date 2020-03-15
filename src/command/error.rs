@@ -12,13 +12,7 @@ pub enum CommandError {
 
     /// The sink returned an error while writing the command.
     #[error("failed to write command")]
-    WriteFailure(#[source] io::Error),
-}
-
-impl From<io::Error> for CommandError {
-    fn from(io: io::Error) -> Self {
-        CommandError::WriteFailure(io)
-    }
+    WriteFailure(#[from] io::Error),
 }
 
 /// A specialized `Result` type for `Command` operations.
