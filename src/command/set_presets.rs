@@ -8,6 +8,7 @@ use crate::{
 use std::io;
 
 /// Configure the supply's pre-set operating points.
+#[derive(Debug, PartialEq)]
 pub struct SetPresets(
     psu::OperatingPoint,
     psu::OperatingPoint,

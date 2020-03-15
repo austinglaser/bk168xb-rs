@@ -8,6 +8,7 @@ use std::io;
 ///
 /// This limit applies to settings via the front panel, but can be lifted via
 /// USB-serial control.
+#[derive(Debug, PartialEq)]
 pub struct SetCurrentLimit(f32);
 
 impl Command for SetCurrentLimit {

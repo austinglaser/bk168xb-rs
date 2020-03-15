@@ -4,6 +4,7 @@ use crate::command::Command;
 /// Get the current output voltage and current
 ///
 /// Set through `SetVoltage` and `SetCurrent`
+#[derive(Debug, PartialEq)]
 pub struct GetSettings;
 
 impl Command for GetSettings {
@@ -17,6 +18,7 @@ impl Command for GetSettings {
 /// - Actual output voltage
 /// - Actual output current
 /// - Output mode (constant current or constant voltage)
+#[derive(Debug, PartialEq)]
 pub struct GetStatus;
 
 impl Command for GetStatus {
@@ -26,6 +28,7 @@ impl Command for GetStatus {
 /// Get the maximum acceptable supply voltage.
 ///
 /// Set through `SetVoltageLimit`
+#[derive(Debug, PartialEq)]
 pub struct GetVoltageLimit;
 
 impl Command for GetVoltageLimit {
@@ -35,6 +38,7 @@ impl Command for GetVoltageLimit {
 /// Get the maximum acceptable supply current.
 ///
 /// Set through `SetCurrentLimit`
+#[derive(Debug, PartialEq)]
 pub struct GetCurrentLimit;
 
 impl Command for GetCurrentLimit {
@@ -45,6 +49,7 @@ impl Command for GetCurrentLimit {
 ///
 /// This is unaffected by the "soft" limits imposed by `SetVoltageLimit`
 /// and `SetCurrentLimit`.
+#[derive(Debug, PartialEq)]
 pub struct GetCapabilities;
 
 impl Command for GetCapabilities {

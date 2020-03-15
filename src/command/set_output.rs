@@ -8,6 +8,7 @@ use crate::{
 use std::io;
 
 /// Control whether the supply is supplying power.
+#[derive(Debug, PartialEq)]
 pub struct SetOutput(psu::OutputState);
 
 impl Command for SetOutput {

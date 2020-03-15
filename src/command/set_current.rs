@@ -8,6 +8,7 @@ use crate::{
 use std::io;
 
 /// Set the supply's operating current.
+#[derive(Debug, PartialEq)]
 pub struct SetCurrent(f32);
 
 impl Command for SetCurrent {

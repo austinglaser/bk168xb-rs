@@ -8,6 +8,7 @@ use crate::{
 use std::io;
 
 /// Select a preset previously set with `SetPresets`
+#[derive(Debug, PartialEq)]
 pub struct SelectPreset(psu::PresetIndex);
 
 impl Command for SelectPreset {

@@ -8,6 +8,7 @@ use crate::{
 use std::io;
 
 /// Set the supply's operating voltage.
+#[derive(Debug, PartialEq)]
 pub struct SetVoltage(f32);
 
 impl Command for SetVoltage {
