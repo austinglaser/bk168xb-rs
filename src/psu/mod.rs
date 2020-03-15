@@ -16,9 +16,9 @@
 #[cfg(test)]
 pub mod test_util;
 
-use crate::command;
+use crate::{command, response};
 
-use std::io;
+use std::{io, str};
 
 /// Output state of the supply.
 #[derive(Debug, PartialEq)]
@@ -41,6 +41,22 @@ impl OutputState {
             OutputState::Off => 1,
         }
     }
+}
+
+/// A supply's output mode.
+#[derive(Debug, PartialEq)]
+pub enum OutputMode {
+    /// Constant voltage mode.
+    ///
+    /// The supply is regulating its output current to maintain the configured
+    /// voltage.
+    ConstantVoltage,
+
+    /// Constant current mode.
+    ///
+    /// The supply is regulating its output voltage to maintain the configured
+    /// current.
+    ConstantCurrent,
 }
 
 /// Used to select a single preset
@@ -124,6 +140,21 @@ impl ArgFormat {
         write!(sink, "{arg:0width$}", arg = value, width = self.digits)?;
 
         Ok(())
+    }
+
+    pub(crate) fn parse(&self, raw: &[u8]) -> response::Result<f32> {
+        use response::ResponseError::MalformedResponse;
+
+        if raw.len() != self.digits {
+            return Err(MalformedResponse);
+        }
+
+        let as_str = str::from_utf8(raw).map_err(|_| MalformedResponse)?;
+        let as_int =
+            usize::from_str_radix(as_str, 10).map_err(|_| MalformedResponse)?;
+        let val = as_int as f32 / self.factor();
+
+        Ok(val)
     }
 
     fn output_val(&self, val: f32) -> Option<u32> {

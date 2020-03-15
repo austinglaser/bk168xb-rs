@@ -11,3 +11,4 @@
 
 pub mod command;
 pub mod psu;
+pub mod response;
