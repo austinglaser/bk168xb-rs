@@ -9,4 +9,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Library can now generate all documented PSU commands
+- Support parsing all documented PSU responses
+- Support sending all documented PSU commands
