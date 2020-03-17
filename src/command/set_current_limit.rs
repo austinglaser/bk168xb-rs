@@ -1,9 +1,9 @@
-use crate::response::Ack;
-///! Command for setting a "soft" current limit.
+//! Command for setting a "soft" current limit.
 use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Ack,
 };
 
 use std::io;
