@@ -1,6 +1,6 @@
 use crate::{
     psu,
-    response::{Response, ResponseError, ResponseSource},
+    response::{Error, Response, ResponseSource},
 };
 
 use galvanic_assert::{
@@ -37,21 +37,20 @@ pub fn assert_deserializes_to<R: Response + Debug>(
 
 pub fn expect_deserialize_error_from<R: Response + Debug, S: io::Read>(
     source: &mut S,
-    expected_error: ResponseError,
+    expected_error: Error,
     psu: &psu::Info,
 ) -> Expectation {
     let err = dbg!(source.get_response::<R>(psu)).unwrap_err();
 
     match expected_error {
-        ResponseError::MalformedResponse => get_expectation_for!(
-            &err,
-            is_variant!(ResponseError::MalformedResponse)
-        ),
-        ResponseError::NoResponse => {
-            get_expectation_for!(&err, is_variant!(ResponseError::NoResponse))
+        Error::MalformedResponse => {
+            get_expectation_for!(&err, is_variant!(Error::MalformedResponse))
         }
-        ResponseError::ReadFailure(expected_inner) => {
-            if let ResponseError::ReadFailure(inner) = err {
+        Error::NoResponse => {
+            get_expectation_for!(&err, is_variant!(Error::NoResponse))
+        }
+        Error::ReadFailure(expected_inner) => {
+            if let Error::ReadFailure(inner) = err {
                 get_expectation_for!(&inner.kind(), eq(expected_inner.kind()))
             } else {
                 get_expectation_for!(false, otherwise "not a read failure")
@@ -62,7 +61,7 @@ pub fn expect_deserialize_error_from<R: Response + Debug, S: io::Read>(
 
 pub fn expect_deserialize_error<R: Response + Debug>(
     resp: &str,
-    expected_error: ResponseError,
+    expected_error: Error,
     psu: &psu::Info,
 ) -> Expectation {
     let mut source = dbg!(resp).as_bytes();
@@ -72,7 +71,7 @@ pub fn expect_deserialize_error<R: Response + Debug>(
 
 pub fn assert_deserialize_error<R: Response + Debug>(
     resp: &str,
-    expected_error: ResponseError,
+    expected_error: Error,
     psu: &psu::Info,
 ) {
     expect_deserialize_error::<R>(resp, expected_error, psu).verify();

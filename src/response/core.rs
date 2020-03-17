@@ -1,6 +1,6 @@
 use crate::{
     psu,
-    response::{ResponseError, Result},
+    response::{Error, Result},
 };
 
 use std::{io, str};
@@ -46,7 +46,7 @@ where
     S: io::Read,
 {
     fn get_response<R: Response>(&mut self, psu: &psu::Info) -> Result<R> {
-        use ResponseError::*;
+        use Error::*;
 
         let arg_bytes = R::arg_bytes();
         let before_ok_bytes = if arg_bytes != 0 {
@@ -87,7 +87,7 @@ const OK: &str = "OK\r";
 
 fn verify_ok(raw: &[u8]) -> Result<()> {
     if raw != OK.as_bytes() {
-        return Err(ResponseError::MalformedResponse);
+        return Err(Error::MalformedResponse);
     }
 
     Ok(())
@@ -95,7 +95,7 @@ fn verify_ok(raw: &[u8]) -> Result<()> {
 
 fn verify_sep(sep: u8) -> Result<()> {
     if sep != b'\r' {
-        return Err(ResponseError::MalformedResponse);
+        return Err(Error::MalformedResponse);
     }
 
     Ok(())
@@ -114,7 +114,7 @@ galvanic_test::test_suite! {
                 ErrorAfter,
             },
             Ack, Current, Presets, Response,
-            ResponseError::*,
+            Error::*,
             Settings, Status, Voltage,
         },
     };
