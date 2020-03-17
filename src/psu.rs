@@ -103,24 +103,31 @@ pub struct Info {
 
     /// The number of decimal places in commands encoding voltage.
     pub voltage_decimals: usize,
+
+    // Don't allow people to arbitrarily construct these
+    #[doc(hidden)]
+    _private: (),
 }
 
 /// Power supply information for the 1685B (60V / 5A) model
 pub const BK1685B: Info = Info {
     current_decimals: 2,
     voltage_decimals: 1,
+    _private: (),
 };
 
 /// Power supply information for the 1687B (36V / 10A) model
 pub const BK1687B: Info = Info {
     current_decimals: 1,
     voltage_decimals: 1,
+    _private: (),
 };
 
 /// Power supply information for the 1687B (18V / 20A) model
 pub const BK1688B: Info = Info {
     current_decimals: 1,
     voltage_decimals: 1,
+    _private: (),
 };
 
 pub(crate) struct ArgFormat {
