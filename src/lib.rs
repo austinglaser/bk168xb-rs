@@ -10,5 +10,8 @@
 #![warn(missing_docs)]
 
 pub mod command;
+mod error;
 pub mod psu;
 pub mod response;
+
+pub use crate::error::*;
