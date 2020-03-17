@@ -96,7 +96,28 @@ pub struct OperatingPoint {
 }
 
 /// Information of model-to-model supply variations.
+///
+/// This type cannot be constructed outside this crate; instead, use one of the
+/// pre-defined static instances for the supported PSU types:
+///
+/// - [`BK1685B`](crate::psu::BK1685B)
+/// - [`BK1687B`](crate::psu::BK1687B)
+/// - [`BK1688B`](crate::psu::BK1688B)
+///
+/// # Cannot be constructed publicly
+///
+/// ```compile_fail
+/// let _ = bk168xb::psu::Info { current_decimals: 3, voltage_decimals: 0 };
+/// ```
+///
+/// # Cannot be copied and modified
+///
+/// ```compile_fail
+/// let mut info = *bk168xb::psu::BK1688B;
+/// info.current_decimals = 3;
+/// ```
 #[derive(Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Info {
     /// The number of decimal places in commands encoding current.
     pub current_decimals: usize,
@@ -106,19 +127,25 @@ pub struct Info {
 }
 
 /// Power supply information for the 1685B (60V / 5A) model
-pub const BK1685B: Info = Info {
+pub const BK1685B: &Info = &BK1685B_INST;
+
+/// Power supply information for the 1687B (36V / 10A) model
+pub const BK1687B: &Info = &BK1687B_INST;
+
+/// Power supply information for the 1688B (18V / 20A) model
+pub const BK1688B: &Info = &BK1688B_INST;
+
+const BK1685B_INST: Info = Info {
     current_decimals: 2,
     voltage_decimals: 1,
 };
 
-/// Power supply information for the 1687B (36V / 10A) model
-pub const BK1687B: Info = Info {
+const BK1687B_INST: Info = Info {
     current_decimals: 1,
     voltage_decimals: 1,
 };
 
-/// Power supply information for the 1687B (18V / 20A) model
-pub const BK1688B: Info = Info {
+const BK1688B_INST: Info = Info {
     current_decimals: 1,
     voltage_decimals: 1,
 };

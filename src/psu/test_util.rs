@@ -5,7 +5,7 @@ use galvanic_test::fixture;
 fixture! {
     any_psu(psu: &'static Info) -> &'static Info {
         params {
-            vec![&BK1685B, &BK1687B, &BK1688B].into_iter()
+            vec![BK1685B, BK1687B, BK1688B].into_iter()
         }
         setup(&mut self) {
             *self.psu
@@ -16,7 +16,7 @@ fixture! {
 fixture! {
     low_voltage_psu(psu: &'static Info) -> &'static Info {
         params {
-            vec![&BK1687B, &BK1688B].into_iter()
+            vec![BK1687B, BK1688B].into_iter()
         }
         setup(&mut self) {
             *self.psu
@@ -27,7 +27,7 @@ fixture! {
 fixture! {
     high_voltage_psu() -> &'static Info {
         setup(&mut self) {
-            &BK1685B
+            BK1685B
         }
     }
 }
