@@ -3,6 +3,7 @@ use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Ack,
 };
 
 use std::io;
@@ -15,6 +16,8 @@ use std::io;
 pub struct SetVoltageLimit(f32);
 
 impl Command for SetVoltageLimit {
+    type Response = Ack;
+
     const FUNCTION: &'static str = "SOVP";
 
     fn serialize_args<S: io::Write>(

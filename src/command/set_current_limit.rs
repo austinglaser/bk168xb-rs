@@ -1,3 +1,4 @@
+use crate::response::Ack;
 ///! Command for setting a "soft" current limit.
 use crate::{
     command::{self, Command},
@@ -15,6 +16,8 @@ use std::io;
 pub struct SetCurrentLimit(f32);
 
 impl Command for SetCurrentLimit {
+    type Response = Ack;
+
     const FUNCTION: &'static str = "SOCP";
 
     fn serialize_args<S: io::Write>(

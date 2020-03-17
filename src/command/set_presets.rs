@@ -4,6 +4,7 @@ use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Ack,
 };
 
 use std::io;
@@ -17,6 +18,8 @@ pub struct SetPresets(
 );
 
 impl Command for SetPresets {
+    type Response = Ack;
+
     const FUNCTION: &'static str = "PROM";
 
     fn serialize_args<S: io::Write>(

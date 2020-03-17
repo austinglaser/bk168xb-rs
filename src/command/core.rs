@@ -1,9 +1,12 @@
-use crate::{command::Result, psu};
+use crate::{command::Result, psu, response};
 
 use std::io;
 
 /// A PSU command.
 pub trait Command {
+    /// The format of the PSU's response to this command.
+    type Response: response::Response;
+
     /// Function-discrimination part of a command.
     ///
     /// Each command starts with a four-character "function." This describes

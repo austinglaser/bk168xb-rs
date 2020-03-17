@@ -4,6 +4,7 @@ use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Ack,
 };
 
 use std::io;
@@ -13,6 +14,8 @@ use std::io;
 pub struct SetOutput(psu::OutputState);
 
 impl Command for SetOutput {
+    type Response = Ack;
+
     const FUNCTION: &'static str = "SOUT";
 
     fn serialize_args<S: io::Write>(

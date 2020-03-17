@@ -4,6 +4,7 @@ use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Ack,
 };
 
 use std::io;
@@ -13,6 +14,8 @@ use std::io;
 pub struct SelectPreset(psu::PresetIndex);
 
 impl Command for SelectPreset {
+    type Response = Ack;
+
     const FUNCTION: &'static str = "RUNM";
 
     fn serialize_args<S: io::Write>(

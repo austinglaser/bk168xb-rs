@@ -1,5 +1,6 @@
 ///! Commands for getting values from the supply.
 use crate::command::Command;
+use crate::response::{Ack, Current, Presets, Settings, Status, Voltage};
 
 /// Get the current output voltage and current
 ///
@@ -8,6 +9,8 @@ use crate::command::Command;
 pub struct GetSettings;
 
 impl Command for GetSettings {
+    type Response = Settings;
+
     const FUNCTION: &'static str = "GETS";
 }
 
@@ -22,6 +25,8 @@ impl Command for GetSettings {
 pub struct GetStatus;
 
 impl Command for GetStatus {
+    type Response = Status;
+
     const FUNCTION: &'static str = "GETD";
 }
 
@@ -32,6 +37,8 @@ impl Command for GetStatus {
 pub struct GetVoltageLimit;
 
 impl Command for GetVoltageLimit {
+    type Response = Voltage;
+
     const FUNCTION: &'static str = "GOVP";
 }
 
@@ -42,6 +49,8 @@ impl Command for GetVoltageLimit {
 pub struct GetCurrentLimit;
 
 impl Command for GetCurrentLimit {
+    type Response = Current;
+
     const FUNCTION: &'static str = "GOCP";
 }
 
@@ -53,6 +62,9 @@ impl Command for GetCurrentLimit {
 pub struct GetCapabilities;
 
 impl Command for GetCapabilities {
+    // XXX: This is wrong -- response not implemented yet
+    type Response = Ack;
+
     const FUNCTION: &'static str = "GMAX";
 }
 
@@ -60,6 +72,8 @@ impl Command for GetCapabilities {
 pub struct GetPresets;
 
 impl Command for GetPresets {
+    type Response = Presets;
+
     const FUNCTION: &'static str = "GETM";
 }
 
