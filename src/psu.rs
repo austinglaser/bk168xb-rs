@@ -141,7 +141,7 @@ impl ArgFormat {
         sink: &mut S,
         val: f32,
     ) -> command::Result<()> {
-        use command::CommandError::ValueUnrepresentable;
+        use command::Error::ValueUnrepresentable;
 
         let value = self.output_val(val).ok_or(ValueUnrepresentable(val))?;
         write!(sink, "{arg:0width$}", arg = value, width = self.digits)?;
@@ -150,7 +150,7 @@ impl ArgFormat {
     }
 
     pub(crate) fn parse(&self, raw: &[u8]) -> response::Result<f32> {
-        use response::ResponseError::MalformedResponse;
+        use response::Error::MalformedResponse;
 
         if raw.len() != self.digits {
             return Err(MalformedResponse);

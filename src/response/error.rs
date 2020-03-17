@@ -1,11 +1,11 @@
 //! Errors that can arise from parsing BK responses
-use thiserror::Error;
+use thiserror;
 
 use std::io;
 
 /// Errors that can arise from `Response` functions.
-#[derive(Debug, Error)]
-pub enum ResponseError {
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
     /// The PSU returned data, but it didn't match the expected format.
     #[error("malformed command response")]
     MalformedResponse,
@@ -22,4 +22,4 @@ pub enum ResponseError {
 }
 
 /// A specialized `Result` type for `Response` operations.
-pub type Result<T> = std::result::Result<T, ResponseError>;
+pub type Result<T> = std::result::Result<T, Error>;

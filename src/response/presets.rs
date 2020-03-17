@@ -1,7 +1,7 @@
 use crate::{
     psu,
     psu::ArgFormat,
-    response::{Response, ResponseError::MalformedResponse, Result},
+    response::{Error::MalformedResponse, Response, Result},
 };
 
 /// The supply's pre-configured operating points.
@@ -74,7 +74,7 @@ galvanic_test::test_suite! {
         psu::test_util::{any_psu, high_voltage_psu, low_voltage_psu},
         response::{
             test_util::{expect_deserialize_error, expect_deserializes_to},
-            ResponseError::MalformedResponse,
+            Error::MalformedResponse,
         },
     };
 

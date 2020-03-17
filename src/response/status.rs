@@ -1,7 +1,7 @@
 use crate::{
     psu,
     psu::ArgFormat,
-    response::{Response, ResponseError::MalformedResponse, Result},
+    response::{Error::MalformedResponse, Response, Result},
 };
 
 /// The supply's instantaneous state.

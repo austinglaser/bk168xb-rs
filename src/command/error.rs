@@ -1,11 +1,11 @@
 //! Error handling for BK commands
-use thiserror::Error;
+use thiserror;
 
 use std::io;
 
 /// Errors that can arise from `Command` functions.
-#[derive(Debug, Error)]
-pub enum CommandError {
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
     /// The command contained a value which is invalid for its format.
     #[error("unrepresentable value in command: {0}")]
     ValueUnrepresentable(f32),
@@ -16,4 +16,4 @@ pub enum CommandError {
 }
 
 /// A specialized `Result` type for `Command` operations.
-pub type Result<T> = std::result::Result<T, CommandError>;
+pub type Result<T> = std::result::Result<T, Error>;

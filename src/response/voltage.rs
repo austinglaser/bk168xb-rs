@@ -41,7 +41,7 @@ galvanic_test::test_suite! {
                 assert_deserialize_error, assert_deserializes_to, invalid_num,
                 valid_ack, valid_num, valid_sep,
             },
-            ResponseError,
+            Error,
         },
     };
 
@@ -66,7 +66,7 @@ galvanic_test::test_suite! {
         resp.push_str(valid_ack.val);
         assert_deserialize_error::<Voltage>(
             &resp,
-            ResponseError::MalformedResponse,
+            Error::MalformedResponse,
             any_psu.val
         );
     }

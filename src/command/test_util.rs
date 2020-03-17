@@ -1,7 +1,7 @@
 //! Assertions specific to dealing with BK168xB commands.
 
 use crate::{
-    command::{Command, CommandError, CommandSink, Result},
+    command::{Command, CommandSink, Error, Result},
     psu,
 };
 
@@ -32,7 +32,7 @@ fn is_unrepresentable_val_error<T>(res: &Result<T>) -> MatchResult {
     let builder = MatchResultBuilder::for_("is unrepresentable value error");
 
     if let Err(ref e) = *res {
-        if let CommandError::ValueUnrepresentable(_) = *e {
+        if let Error::ValueUnrepresentable(_) = *e {
             builder.matched()
         } else {
             builder.failed_because("wrong type of error")
