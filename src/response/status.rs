@@ -1,7 +1,6 @@
 use crate::{
-    psu,
-    psu::ArgFormat,
     response::{Error::MalformedResponse, Response, Result},
+    ArgFormat, OutputMode, SupplyVariant,
 };
 
 /// The supply's instantaneous state.
@@ -17,7 +16,7 @@ pub struct Status {
     pub current: f32,
 
     /// Supply's output-limiting mode.
-    pub mode: psu::OutputMode,
+    pub mode: OutputMode,
 }
 
 impl Response for Status {
@@ -25,7 +24,7 @@ impl Response for Status {
         9
     }
 
-    fn parse_args(raw: &[u8], _psu: &psu::Info) -> Result<Self> {
+    fn parse_args(raw: &[u8], _variant: &SupplyVariant) -> Result<Self> {
         // n.b.: For both current and voltage, this response has a different
         // format than others. Firstly, it uses four digits. Secondly, each
         // field is specified to two decimal places -- regardless of the power
@@ -42,8 +41,8 @@ impl Response for Status {
         let voltage = arg_fmt.parse(volt_raw)?;
         let current = arg_fmt.parse(curr_raw)?;
         let mode = match mode_raw {
-            b'0' => psu::OutputMode::ConstantVoltage,
-            b'1' => psu::OutputMode::ConstantCurrent,
+            b'0' => OutputMode::ConstantVoltage,
+            b'1' => OutputMode::ConstantCurrent,
             _ => return Err(MalformedResponse),
         };
 
@@ -62,10 +61,10 @@ galvanic_test::test_suite! {
     use super::*;
 
     use crate::{
-        psu::test_util::any_psu,
         response::test_util::{
             expect_deserialize_error, expect_deserializes_to,
         },
+        test_util::any_psu,
     };
 
     test can_parse(any_psu) {
@@ -74,7 +73,7 @@ galvanic_test::test_suite! {
             Status {
                 voltage: 0.0,
                 current: 0.0,
-                mode: psu::OutputMode::ConstantVoltage,
+                mode: OutputMode::ConstantVoltage,
             },
             any_psu.val
         );
@@ -83,7 +82,7 @@ galvanic_test::test_suite! {
             Status {
                 voltage: 99.99,
                 current: 0.0,
-                mode: psu::OutputMode::ConstantVoltage,
+                mode: OutputMode::ConstantVoltage,
             },
             any_psu.val
         );
@@ -92,7 +91,7 @@ galvanic_test::test_suite! {
             Status {
                 voltage: 0.0,
                 current: 99.99,
-                mode: psu::OutputMode::ConstantVoltage,
+                mode: OutputMode::ConstantVoltage,
             },
             any_psu.val
         );
@@ -101,7 +100,7 @@ galvanic_test::test_suite! {
             Status {
                 voltage: 0.0,
                 current: 0.0,
-                mode: psu::OutputMode::ConstantCurrent,
+                mode: OutputMode::ConstantCurrent,
             },
             any_psu.val
         );
@@ -110,7 +109,7 @@ galvanic_test::test_suite! {
             Status {
                 voltage: 12.34,
                 current: 56.78,
-                mode: psu::OutputMode::ConstantVoltage,
+                mode: OutputMode::ConstantVoltage,
             },
             any_psu.val
         );
@@ -119,7 +118,7 @@ galvanic_test::test_suite! {
             Status {
                 voltage: 98.76,
                 current: 54.32,
-                mode: psu::OutputMode::ConstantCurrent,
+                mode: OutputMode::ConstantCurrent,
             },
             any_psu.val
         );
@@ -128,7 +127,7 @@ galvanic_test::test_suite! {
             Status {
                 voltage: 3.02,
                 current: 1.45,
-                mode: psu::OutputMode::ConstantVoltage,
+                mode: OutputMode::ConstantVoltage,
             },
             any_psu.val
         );

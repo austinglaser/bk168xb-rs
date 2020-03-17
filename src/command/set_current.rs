@@ -2,9 +2,8 @@
 
 use crate::{
     command::{self, Command},
-    psu,
-    psu::ArgFormat,
     response::Current,
+    ArgFormat, SupplyVariant,
 };
 
 use std::io;
@@ -19,10 +18,10 @@ impl Command for SetCurrent {
     fn serialize_args<S: io::Write>(
         &self,
         sink: &mut S,
-        psu: &psu::Info,
+        variant: &SupplyVariant,
     ) -> command::Result<()> {
         let fmt = ArgFormat {
-            decimals: psu.current_decimals,
+            decimals: variant.current_decimals,
             digits: 3,
         };
 
@@ -51,26 +50,24 @@ test_suite! {
 
     use super::*;
 
-    use crate::command::test_util::{
-        expect_serializes_to,
-        assert_cant_serialize,
-    };
-    use crate::psu::test_util::{high_voltage_psu, low_voltage_psu};
-    use crate::psu::test_util::{
-        invalid_current_high_voltage,
-        invalid_current_low_voltage
+    use crate::{
+        command::test_util::{assert_cant_serialize, expect_serializes_to},
+        test_util::{
+            high_voltage_psu, invalid_current_high_voltage,
+            invalid_current_low_voltage, low_voltage_psu,
+        },
     };
 
     test serialize_for_low_v_psu(low_voltage_psu) {
-        let psu = low_voltage_psu.val;
-        let _e = expect_serializes_to(SetCurrent(0.), "CURR000\r", psu);
-        let _e = expect_serializes_to(SetCurrent(0.5), "CURR005\r", psu);
-        let _e = expect_serializes_to(SetCurrent(1.5), "CURR015\r", psu);
-        let _e = expect_serializes_to(SetCurrent(1.5), "CURR015\r", psu);
-        let _e = expect_serializes_to(SetCurrent(12.3), "CURR123\r", psu);
-        let _e = expect_serializes_to(SetCurrent(99.9), "CURR999\r", psu);
-        let _e = expect_serializes_to(SetCurrent(8.21), "CURR082\r", psu);
-        let _e = expect_serializes_to(SetCurrent(12.99), "CURR130\r", psu);
+        let variant = low_voltage_psu.val;
+        let _e = expect_serializes_to(SetCurrent(0.), "CURR000\r", variant);
+        let _e = expect_serializes_to(SetCurrent(0.5), "CURR005\r", variant);
+        let _e = expect_serializes_to(SetCurrent(1.5), "CURR015\r", variant);
+        let _e = expect_serializes_to(SetCurrent(1.5), "CURR015\r", variant);
+        let _e = expect_serializes_to(SetCurrent(12.3), "CURR123\r", variant);
+        let _e = expect_serializes_to(SetCurrent(99.9), "CURR999\r", variant);
+        let _e = expect_serializes_to(SetCurrent(8.21), "CURR082\r", variant);
+        let _e = expect_serializes_to(SetCurrent(12.99), "CURR130\r", variant);
     }
 
     test cant_serialize_if_unrepresentable_on_low_v(
@@ -84,14 +81,14 @@ test_suite! {
     }
 
     test serialize_for_high_v_psu(high_voltage_psu) {
-        let psu = high_voltage_psu.val;
-        let _e = expect_serializes_to(SetCurrent(0.), "CURR000\r", psu);
-        let _e = expect_serializes_to(SetCurrent(0.5), "CURR050\r", psu);
-        let _e = expect_serializes_to(SetCurrent(1.55), "CURR155\r", psu);
-        let _e = expect_serializes_to(SetCurrent(2.31), "CURR231\r", psu);
-        let _e = expect_serializes_to(SetCurrent(9.99), "CURR999\r", psu);
-        let _e = expect_serializes_to(SetCurrent(0.821), "CURR082\r", psu);
-        let _e = expect_serializes_to(SetCurrent(1.299), "CURR130\r", psu);
+        let variant = high_voltage_psu.val;
+        let _e = expect_serializes_to(SetCurrent(0.), "CURR000\r", variant);
+        let _e = expect_serializes_to(SetCurrent(0.5), "CURR050\r", variant);
+        let _e = expect_serializes_to(SetCurrent(1.55), "CURR155\r", variant);
+        let _e = expect_serializes_to(SetCurrent(2.31), "CURR231\r", variant);
+        let _e = expect_serializes_to(SetCurrent(9.99), "CURR999\r", variant);
+        let _e = expect_serializes_to(SetCurrent(0.821), "CURR082\r", variant);
+        let _e = expect_serializes_to(SetCurrent(1.299), "CURR130\r", variant);
     }
 
     test cant_serialize_if_unrepresentable_on_high_v(

@@ -1,8 +1,7 @@
 use crate::{
-    psu,
     response::{Response, Result},
+    ArgFormat, SupplyVariant,
 };
-use psu::ArgFormat;
 
 /// A supply voltage.
 ///
@@ -16,9 +15,9 @@ impl Response for Voltage {
         3
     }
 
-    fn parse_args(raw: &[u8], psu: &psu::Info) -> Result<Self> {
+    fn parse_args(raw: &[u8], variant: &SupplyVariant) -> Result<Self> {
         let voltage_fmt = ArgFormat {
-            decimals: psu.voltage_decimals,
+            decimals: variant.voltage_decimals,
             digits: Self::arg_bytes(),
         };
 
@@ -41,7 +40,6 @@ galvanic_test::test_suite! {
     use super::*;
 
     use crate::{
-        psu::test_util::any_psu,
         response::{
             test_util::{
                 assert_deserialize_error, assert_deserializes_to, invalid_num,
@@ -49,17 +47,18 @@ galvanic_test::test_suite! {
             },
             Error,
         },
+        test_util::any_psu,
     };
 
     test can_parse(any_psu, valid_num, valid_sep, valid_ack) {
-        let psu = any_psu.val;
+        let variant = any_psu.val;
         let arg = valid_num.val;
 
         let mut resp = arg.raw.to_owned();
         resp.push(valid_sep.val);
         resp.push_str(valid_ack.val);
 
-        assert_deserializes_to(&resp, Voltage(arg.one_decimal), psu);
+        assert_deserializes_to(&resp, Voltage(arg.one_decimal), variant);
     }
 
     test fails_to_parse_with_malformed_param(

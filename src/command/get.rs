@@ -73,8 +73,7 @@ test_suite! {
 
     use super::*;
 
-    use crate::command::test_util::*;
-    use crate::psu::test_util::any_psu;
+    use crate::{command::test_util::*, test_util::any_psu};
 
     test serialize_get_settings(any_psu) {
         assert_serializes_to(GetSettings, "GETS\r", any_psu.val);

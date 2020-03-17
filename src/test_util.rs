@@ -3,29 +3,29 @@ use super::*;
 use galvanic_test::fixture;
 
 fixture! {
-    any_psu(psu: &'static Info) -> &'static Info {
+    any_psu(variant: &'static SupplyVariant) -> &'static SupplyVariant {
         params {
             vec![BK1685B, BK1687B, BK1688B].into_iter()
         }
         setup(&mut self) {
-            *self.psu
+            *self.variant
         }
     }
 }
 
 fixture! {
-    low_voltage_psu(psu: &'static Info) -> &'static Info {
+    low_voltage_psu(variant: &'static SupplyVariant) -> &'static SupplyVariant {
         params {
             vec![BK1687B, BK1688B].into_iter()
         }
         setup(&mut self) {
-            *self.psu
+            *self.variant
         }
     }
 }
 
 fixture! {
-    high_voltage_psu() -> &'static Info {
+    high_voltage_psu() -> &'static SupplyVariant {
         setup(&mut self) {
             BK1685B
         }

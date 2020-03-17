@@ -2,9 +2,8 @@
 
 use crate::{
     command::{self, Command},
-    psu,
-    psu::ArgFormat,
     response::Presets,
+    ArgFormat, OperatingPoint, PresetIndex, SupplyVariant,
 };
 use std::ops::{Index, IndexMut};
 
@@ -13,9 +12,9 @@ use std::io;
 /// Configure the supply's pre-set operating points.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct SetPresets(
-    pub psu::OperatingPoint,
-    pub psu::OperatingPoint,
-    pub psu::OperatingPoint,
+    pub OperatingPoint,
+    pub OperatingPoint,
+    pub OperatingPoint,
 );
 
 impl Command for SetPresets {
@@ -24,15 +23,15 @@ impl Command for SetPresets {
     fn serialize_args<S: io::Write>(
         &self,
         sink: &mut S,
-        psu: &psu::Info,
+        variant: &SupplyVariant,
     ) -> command::Result<()> {
         let v_fmt = ArgFormat {
-            decimals: psu.voltage_decimals,
+            decimals: variant.voltage_decimals,
             digits: 3,
         };
 
         let i_fmt = ArgFormat {
-            decimals: psu.current_decimals,
+            decimals: variant.current_decimals,
             digits: 3,
         };
 
@@ -53,24 +52,24 @@ impl From<Presets> for SetPresets {
     }
 }
 
-impl Index<psu::PresetIndex> for SetPresets {
-    type Output = psu::OperatingPoint;
+impl Index<PresetIndex> for SetPresets {
+    type Output = OperatingPoint;
 
-    fn index(&self, i: psu::PresetIndex) -> &Self::Output {
+    fn index(&self, i: PresetIndex) -> &Self::Output {
         match i {
-            psu::PresetIndex::One => &self.0,
-            psu::PresetIndex::Two => &self.1,
-            psu::PresetIndex::Three => &self.2,
+            PresetIndex::One => &self.0,
+            PresetIndex::Two => &self.1,
+            PresetIndex::Three => &self.2,
         }
     }
 }
 
-impl IndexMut<psu::PresetIndex> for SetPresets {
-    fn index_mut(&mut self, i: psu::PresetIndex) -> &mut Self::Output {
+impl IndexMut<PresetIndex> for SetPresets {
+    fn index_mut(&mut self, i: PresetIndex) -> &mut Self::Output {
         match i {
-            psu::PresetIndex::One => &mut self.0,
-            psu::PresetIndex::Two => &mut self.1,
-            psu::PresetIndex::Three => &mut self.2,
+            PresetIndex::One => &mut self.0,
+            PresetIndex::Two => &mut self.1,
+            PresetIndex::Three => &mut self.2,
         }
     }
 }
@@ -84,16 +83,13 @@ test_suite! {
 
     use super::*;
 
-    use crate::command::test_util::{
-        expect_serializes_to,
-        expect_cant_serialize,
-    };
-    use crate::psu::OperatingPoint;
-    use crate::psu::test_util::{any_psu, high_voltage_psu, low_voltage_psu};
-    use crate::psu::test_util::{
-        invalid_current_high_voltage,
-        invalid_current_low_voltage,
-        invalid_voltage,
+    use crate::{
+        command::test_util::{expect_cant_serialize, expect_serializes_to},
+        test_util::{
+            any_psu, high_voltage_psu, invalid_current_high_voltage,
+            invalid_current_low_voltage, invalid_voltage, low_voltage_psu,
+        },
+        OperatingPoint,
     };
 
     test serialize_for_low_v_psu(low_voltage_psu) {

@@ -1,21 +1,3 @@
-//! Power supply information
-//!
-//! # Constant definitions
-//!
-//! This module exports constants and common types relating to power supply
-//! state, control points, etc.
-//!
-//! # Protocol Quirks
-//!
-//! There are various pieces of data which vary between supported power
-//! supplies. These include the precision of certain commands, nominal
-//! current/voltage limits, etc.
-//!
-//! All that information is encompassed in the information structs here.
-
-#[cfg(test)]
-pub mod test_util;
-
 use crate::{command, response};
 
 use std::{io, str};
@@ -100,25 +82,25 @@ pub struct OperatingPoint {
 /// This type cannot be constructed outside this crate; instead, use one of the
 /// pre-defined static instances for the supported PSU types:
 ///
-/// - [`BK1685B`](crate::psu::BK1685B)
-/// - [`BK1687B`](crate::psu::BK1687B)
-/// - [`BK1688B`](crate::psu::BK1688B)
+/// - [`BK1685B`](crate::BK1685B)
+/// - [`BK1687B`](crate::BK1687B)
+/// - [`BK1688B`](crate::BK1688B)
 ///
 /// # Cannot be constructed publicly
 ///
 /// ```compile_fail
-/// let _ = bk168xb::psu::Info { current_decimals: 3, voltage_decimals: 0 };
+/// let _ = bk168xb::SupplyVariant { current_decimals: 3, voltage_decimals: 0 };
 /// ```
 ///
 /// # Cannot be copied and modified
 ///
 /// ```compile_fail
-/// let mut info = *bk168xb::psu::BK1688B;
+/// let mut info = *bk168xb::BK1688B;
 /// info.current_decimals = 3;
 /// ```
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[non_exhaustive]
-pub struct Info {
+pub struct SupplyVariant {
     /// The number of decimal places in commands encoding current.
     pub current_decimals: usize,
 
@@ -127,25 +109,25 @@ pub struct Info {
 }
 
 /// Power supply information for the 1685B (60V / 5A) model
-pub const BK1685B: &Info = &BK1685B_INST;
+pub const BK1685B: &SupplyVariant = &BK1685B_INST;
 
 /// Power supply information for the 1687B (36V / 10A) model
-pub const BK1687B: &Info = &BK1687B_INST;
+pub const BK1687B: &SupplyVariant = &BK1687B_INST;
 
 /// Power supply information for the 1688B (18V / 20A) model
-pub const BK1688B: &Info = &BK1688B_INST;
+pub const BK1688B: &SupplyVariant = &BK1688B_INST;
 
-const BK1685B_INST: Info = Info {
+const BK1685B_INST: SupplyVariant = SupplyVariant {
     current_decimals: 2,
     voltage_decimals: 1,
 };
 
-const BK1687B_INST: Info = Info {
+const BK1687B_INST: SupplyVariant = SupplyVariant {
     current_decimals: 1,
     voltage_decimals: 1,
 };
 
-const BK1688B_INST: Info = Info {
+const BK1688B_INST: SupplyVariant = SupplyVariant {
     current_decimals: 1,
     voltage_decimals: 1,
 };

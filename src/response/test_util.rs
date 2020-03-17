@@ -1,6 +1,6 @@
 use crate::{
-    psu,
     response::{Error, Response, ResponseSource},
+    SupplyVariant,
 };
 
 use galvanic_assert::{
@@ -13,11 +13,11 @@ use std::{fmt::Debug, io, io::Read};
 pub fn expect_deserializes_to<R: Response + Debug>(
     resp: &str,
     expected_result: R,
-    psu: &psu::Info,
+    variant: &SupplyVariant,
 ) -> Expectation {
     let mut source = dbg!(resp).as_bytes();
 
-    let result = dbg!(source.get_response(psu)).unwrap();
+    let result = dbg!(source.get_response(variant)).unwrap();
 
     let byte: &mut [u8] = &mut [0; 1];
     assert_that!(
@@ -30,17 +30,17 @@ pub fn expect_deserializes_to<R: Response + Debug>(
 pub fn assert_deserializes_to<R: Response + Debug>(
     resp: &str,
     expected_result: R,
-    psu: &psu::Info,
+    variant: &SupplyVariant,
 ) {
-    expect_deserializes_to(resp, expected_result, psu).verify();
+    expect_deserializes_to(resp, expected_result, variant).verify();
 }
 
 pub fn expect_deserialize_error_from<R: Response + Debug, S: io::Read>(
     source: &mut S,
     expected_error: Error,
-    psu: &psu::Info,
+    variant: &SupplyVariant,
 ) -> Expectation {
-    let err = dbg!(source.get_response::<R>(psu)).unwrap_err();
+    let err = dbg!(source.get_response::<R>(variant)).unwrap_err();
 
     match expected_error {
         Error::MalformedResponse => {
@@ -62,19 +62,19 @@ pub fn expect_deserialize_error_from<R: Response + Debug, S: io::Read>(
 pub fn expect_deserialize_error<R: Response + Debug>(
     resp: &str,
     expected_error: Error,
-    psu: &psu::Info,
+    variant: &SupplyVariant,
 ) -> Expectation {
     let mut source = dbg!(resp).as_bytes();
 
-    expect_deserialize_error_from::<R, _>(&mut source, expected_error, psu)
+    expect_deserialize_error_from::<R, _>(&mut source, expected_error, variant)
 }
 
 pub fn assert_deserialize_error<R: Response + Debug>(
     resp: &str,
     expected_error: Error,
-    psu: &psu::Info,
+    variant: &SupplyVariant,
 ) {
-    expect_deserialize_error::<R>(resp, expected_error, psu).verify();
+    expect_deserialize_error::<R>(resp, expected_error, variant).verify();
 }
 
 fixture! {

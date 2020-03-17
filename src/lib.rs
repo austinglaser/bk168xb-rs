@@ -8,7 +8,13 @@
 //! - BK1688B (18V/20A)
 
 #![warn(missing_docs)]
+#![forbid(unsafe_code)]
+
+mod core;
+#[cfg(test)]
+pub(crate) mod test_util;
 
 pub mod command;
-pub mod psu;
 pub mod response;
+
+pub use crate::core::*;

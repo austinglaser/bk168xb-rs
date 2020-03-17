@@ -2,7 +2,7 @@
 
 use crate::{
     command::{Command, CommandSink, Error, Result},
-    psu,
+    SupplyVariant,
 };
 
 use galvanic_assert::{
@@ -12,18 +12,18 @@ use galvanic_assert::{
 
 use std::str;
 
-pub fn assert_cant_serialize<C: Command>(command: C, psu: &psu::Info) {
-    expect_cant_serialize(command, psu).verify();
+pub fn assert_cant_serialize<C: Command>(command: C, variant: &SupplyVariant) {
+    expect_cant_serialize(command, variant).verify();
 }
 
 pub fn expect_cant_serialize<C: Command>(
     command: C,
-    psu: &psu::Info,
+    variant: &SupplyVariant,
 ) -> Expectation {
     let mut sink = Vec::new();
 
     get_expectation_for!(
-        &sink.send_command(&command, psu),
+        &sink.send_command(&command, variant),
         is_unrepresentable_val_error
     )
 }
@@ -45,19 +45,19 @@ fn is_unrepresentable_val_error<T>(res: &Result<T>) -> MatchResult {
 pub fn assert_serializes_to<C: Command>(
     command: C,
     result: &str,
-    psu: &psu::Info,
+    variant: &SupplyVariant,
 ) {
-    expect_serializes_to(command, result, psu).verify();
+    expect_serializes_to(command, result, variant).verify();
 }
 
 pub fn expect_serializes_to<C: Command>(
     command: C,
     result: &str,
-    psu: &psu::Info,
+    variant: &SupplyVariant,
 ) -> Expectation {
     let mut sink = Vec::new();
 
-    sink.send_command(&command, psu).unwrap();
+    sink.send_command(&command, variant).unwrap();
     let written = str::from_utf8(&sink).unwrap();
 
     get_expectation_for!(&written, eq(result))

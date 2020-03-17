@@ -2,15 +2,14 @@
 
 use crate::{
     command::{self, Command},
-    psu,
-    psu::ArgFormat,
+    ArgFormat, OutputState, SupplyVariant,
 };
 
 use std::io;
 
 /// Control whether the supply is supplying power.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub struct SetOutput(pub psu::OutputState);
+pub struct SetOutput(pub OutputState);
 
 impl Command for SetOutput {
     const FUNCTION: &'static str = "SOUT";
@@ -18,7 +17,7 @@ impl Command for SetOutput {
     fn serialize_args<S: io::Write>(
         &self,
         sink: &mut S,
-        _psu: &psu::Info,
+        _variant: &SupplyVariant,
     ) -> command::Result<()> {
         let fmt = ArgFormat {
             decimals: 0,
@@ -38,9 +37,10 @@ test_suite! {
 
     use super::*;
 
-    use crate::command::test_util::expect_serializes_to;
-    use crate::psu::OutputState;
-    use crate::psu::test_util::any_psu;
+    use crate::{
+        command::test_util::expect_serializes_to, test_util::any_psu,
+        OutputState,
+    };
 
     test can_serialize(any_psu) {
         let _e = expect_serializes_to(

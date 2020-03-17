@@ -1,8 +1,7 @@
 use crate::{
-    psu,
     response::{Response, Result},
+    ArgFormat, SupplyVariant,
 };
-use psu::ArgFormat;
 
 /// A power-supply response for a single current value.
 ///
@@ -16,9 +15,9 @@ impl Response for Current {
         3
     }
 
-    fn parse_args(raw: &[u8], psu: &psu::Info) -> Result<Self> {
+    fn parse_args(raw: &[u8], variant: &SupplyVariant) -> Result<Self> {
         let current_fmt = ArgFormat {
-            decimals: psu.current_decimals,
+            decimals: variant.current_decimals,
             digits: Self::arg_bytes(),
         };
 
@@ -41,7 +40,6 @@ galvanic_test::test_suite! {
     use super::*;
 
     use crate::{
-        psu::test_util::{any_psu, high_voltage_psu, low_voltage_psu},
         response::{
             test_util::{
                 assert_deserialize_error, assert_deserializes_to, invalid_num,
@@ -49,6 +47,7 @@ galvanic_test::test_suite! {
             },
             Error,
         },
+        test_util::{any_psu, high_voltage_psu, low_voltage_psu},
     };
 
     test can_parse_for_low_voltage(
@@ -57,14 +56,14 @@ galvanic_test::test_suite! {
         valid_sep,
         valid_ack
     ) {
-        let psu = low_voltage_psu.val;
+        let variant = low_voltage_psu.val;
         let arg = valid_num.val;
 
         let mut resp = arg.raw.to_owned();
         resp.push(valid_sep.val);
         resp.push_str(valid_ack.val);
 
-        assert_deserializes_to(&resp, Current(arg.one_decimal), psu);
+        assert_deserializes_to(&resp, Current(arg.one_decimal), variant);
     }
 
     test can_parse_for_high_voltage(
@@ -73,14 +72,14 @@ galvanic_test::test_suite! {
         valid_sep,
         valid_ack
     ) {
-        let psu = high_voltage_psu.val;
+        let variant = high_voltage_psu.val;
         let arg = valid_num.val;
 
         let mut resp = arg.raw.to_owned();
         resp.push(valid_sep.val);
         resp.push_str(valid_ack.val);
 
-        assert_deserializes_to(&resp, Current(arg.two_decimals), psu);
+        assert_deserializes_to(&resp, Current(arg.two_decimals), variant);
     }
 
     test fails_to_parse_with_malformed_param(

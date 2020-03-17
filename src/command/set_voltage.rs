@@ -2,9 +2,8 @@
 
 use crate::{
     command::{self, Command},
-    psu,
-    psu::ArgFormat,
     response::Voltage,
+    ArgFormat, SupplyVariant,
 };
 
 use std::io;
@@ -19,10 +18,10 @@ impl Command for SetVoltage {
     fn serialize_args<S: io::Write>(
         &self,
         sink: &mut S,
-        psu: &psu::Info,
+        variant: &SupplyVariant,
     ) -> command::Result<()> {
         let fmt = ArgFormat {
-            decimals: psu.voltage_decimals,
+            decimals: variant.voltage_decimals,
             digits: 3,
         };
 
@@ -51,20 +50,19 @@ test_suite! {
 
     use super::*;
 
-    use crate::command::test_util::{
-        expect_serializes_to,
-        assert_cant_serialize,
+    use crate::{
+        command::test_util::{assert_cant_serialize, expect_serializes_to},
+        test_util::{any_psu, invalid_voltage},
     };
-    use crate::psu::test_util::{any_psu, invalid_voltage};
 
     test can_serialize(any_psu) {
-        let psu = any_psu.val;
-        let _e = expect_serializes_to(SetVoltage(12.3), "VOLT123\r", psu);
-        let _e = expect_serializes_to(SetVoltage(0.), "VOLT000\r", psu);
-        let _e = expect_serializes_to(SetVoltage(0.1), "VOLT001\r", psu);
-        let _e = expect_serializes_to(SetVoltage(99.9), "VOLT999\r", psu);
-        let _e = expect_serializes_to(SetVoltage(8.21), "VOLT082\r", psu);
-        let _e = expect_serializes_to(SetVoltage(12.99), "VOLT130\r", psu);
+        let variant = any_psu.val;
+        let _e = expect_serializes_to(SetVoltage(12.3), "VOLT123\r", variant);
+        let _e = expect_serializes_to(SetVoltage(0.), "VOLT000\r", variant);
+        let _e = expect_serializes_to(SetVoltage(0.1), "VOLT001\r", variant);
+        let _e = expect_serializes_to(SetVoltage(99.9), "VOLT999\r", variant);
+        let _e = expect_serializes_to(SetVoltage(8.21), "VOLT082\r", variant);
+        let _e = expect_serializes_to(SetVoltage(12.99), "VOLT130\r", variant);
     }
 
     test cant_serialize_if_unrepresentable(any_psu, invalid_voltage) {

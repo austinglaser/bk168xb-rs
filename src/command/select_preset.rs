@@ -2,15 +2,14 @@
 
 use crate::{
     command::{self, Command},
-    psu,
-    psu::ArgFormat,
+    ArgFormat, PresetIndex, SupplyVariant,
 };
 
 use std::io;
 
 /// Select a preset previously set with `SetPresets`
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub struct SelectPreset(pub psu::PresetIndex);
+pub struct SelectPreset(pub PresetIndex);
 
 impl Command for SelectPreset {
     const FUNCTION: &'static str = "RUNM";
@@ -18,7 +17,7 @@ impl Command for SelectPreset {
     fn serialize_args<S: io::Write>(
         &self,
         sink: &mut S,
-        _psu: &psu::Info,
+        _variant: &SupplyVariant,
     ) -> command::Result<()> {
         let fmt = ArgFormat {
             decimals: 0,
@@ -39,8 +38,8 @@ test_suite! {
     use super::*;
 
     use crate::command::test_util::expect_serializes_to;
-    use crate::psu::PresetIndex;
-    use crate::psu::test_util::any_psu;
+    use crate::PresetIndex;
+    use crate::test_util::any_psu;
 
     test serialize_select_preset(any_psu) {
         let _e = expect_serializes_to(

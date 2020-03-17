@@ -1,9 +1,8 @@
 ///! Command for setting a "soft" current limit.
 use crate::{
     command::{self, Command},
-    psu,
-    psu::ArgFormat,
     response::Current,
+    ArgFormat, SupplyVariant,
 };
 
 use std::io;
@@ -21,10 +20,10 @@ impl Command for SetCurrentLimit {
     fn serialize_args<S: io::Write>(
         &self,
         sink: &mut S,
-        psu: &psu::Info,
+        variant: &SupplyVariant,
     ) -> command::Result<()> {
         let fmt = ArgFormat {
-            decimals: psu.current_decimals,
+            decimals: variant.current_decimals,
             digits: 3,
         };
 
@@ -53,25 +52,23 @@ test_suite! {
 
     use super::*;
 
-    use crate::command::test_util::{
-        expect_serializes_to,
-        assert_cant_serialize,
-    };
-    use crate::psu::test_util::{high_voltage_psu, low_voltage_psu};
-    use crate::psu::test_util::{
-        invalid_current_high_voltage,
-        invalid_current_low_voltage
+    use crate::{
+        command::test_util::{assert_cant_serialize, expect_serializes_to},
+        test_util::{
+            high_voltage_psu, invalid_current_high_voltage,
+            invalid_current_low_voltage, low_voltage_psu,
+        },
     };
 
     test serialize_for_low_v_psu(low_voltage_psu) {
-        let psu = low_voltage_psu.val;
-        let _e = expect_serializes_to(SetCurrentLimit(0.), "SOCP000\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(0.5), "SOCP005\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(1.5), "SOCP015\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(12.3), "SOCP123\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(99.9), "SOCP999\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(8.21), "SOCP082\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(12.99), "SOCP130\r", psu);
+        let variant = low_voltage_psu.val;
+        let _e = expect_serializes_to(SetCurrentLimit(0.), "SOCP000\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(0.5), "SOCP005\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(1.5), "SOCP015\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(12.3), "SOCP123\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(99.9), "SOCP999\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(8.21), "SOCP082\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(12.99), "SOCP130\r", variant);
     }
 
     test cant_serialize_if_unrepresentable_on_low_v(
@@ -85,14 +82,14 @@ test_suite! {
     }
 
     test serialize_for_high_v_psu(high_voltage_psu) {
-        let psu = high_voltage_psu.val;
-        let _e = expect_serializes_to(SetCurrentLimit(0.), "SOCP000\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(0.5), "SOCP050\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(1.55), "SOCP155\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(2.31), "SOCP231\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(9.99), "SOCP999\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(0.821), "SOCP082\r", psu);
-        let _e = expect_serializes_to(SetCurrentLimit(1.299), "SOCP130\r", psu);
+        let variant = high_voltage_psu.val;
+        let _e = expect_serializes_to(SetCurrentLimit(0.), "SOCP000\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(0.5), "SOCP050\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(1.55), "SOCP155\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(2.31), "SOCP231\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(9.99), "SOCP999\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(0.821), "SOCP082\r", variant);
+        let _e = expect_serializes_to(SetCurrentLimit(1.299), "SOCP130\r", variant);
     }
 
     test cant_serialize_if_unrepresentable_on_high_v(
