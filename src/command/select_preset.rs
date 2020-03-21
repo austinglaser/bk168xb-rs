@@ -9,8 +9,8 @@ use crate::{
 use std::io;
 
 /// Select a preset previously set with `SetPresets`
-#[derive(Debug, PartialEq)]
-pub struct SelectPreset(psu::PresetIndex);
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct SelectPreset(pub psu::PresetIndex);
 
 impl Command for SelectPreset {
     const FUNCTION: &'static str = "RUNM";

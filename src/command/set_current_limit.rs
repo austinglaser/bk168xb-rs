@@ -3,6 +3,7 @@ use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Current,
 };
 
 use std::io;
@@ -11,8 +12,8 @@ use std::io;
 ///
 /// This limit applies to settings via the front panel, but can be lifted via
 /// USB-serial control.
-#[derive(Debug, PartialEq)]
-pub struct SetCurrentLimit(f32);
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct SetCurrentLimit(pub f32);
 
 impl Command for SetCurrentLimit {
     const FUNCTION: &'static str = "SOCP";
@@ -28,6 +29,18 @@ impl Command for SetCurrentLimit {
         };
 
         fmt.serialize_arg(sink, self.0)
+    }
+}
+
+impl From<Current> for SetCurrentLimit {
+    fn from(c: Current) -> Self {
+        SetCurrentLimit(c.0)
+    }
+}
+
+impl From<f32> for SetCurrentLimit {
+    fn from(i: f32) -> Self {
+        SetCurrentLimit(i)
     }
 }
 

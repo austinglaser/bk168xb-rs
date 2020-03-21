@@ -8,8 +8,8 @@ use psu::ArgFormat;
 ///
 /// This is the response format used by the
 /// [`GetVoltageLimit`](crate::command::GetVoltageLimit) command.
-#[derive(Debug, PartialEq)]
-pub struct Voltage(f32);
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct Voltage(pub f32);
 
 impl Response for Voltage {
     fn arg_bytes() -> usize {
@@ -25,6 +25,12 @@ impl Response for Voltage {
         let voltage = voltage_fmt.parse(raw)?;
 
         Ok(Voltage(voltage))
+    }
+}
+
+impl From<f32> for Voltage {
+    fn from(v: f32) -> Self {
+        Voltage(v)
     }
 }
 

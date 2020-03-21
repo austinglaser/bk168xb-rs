@@ -4,7 +4,7 @@ use crate::command::Command;
 /// Get the current output voltage and current
 ///
 /// Set through `SetVoltage` and `SetCurrent`
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct GetSettings;
 
 impl Command for GetSettings {
@@ -18,7 +18,7 @@ impl Command for GetSettings {
 /// - Actual output voltage
 /// - Actual output current
 /// - Output mode (constant current or constant voltage)
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct GetStatus;
 
 impl Command for GetStatus {
@@ -28,7 +28,7 @@ impl Command for GetStatus {
 /// Get the maximum acceptable supply voltage.
 ///
 /// Set through `SetVoltageLimit`
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct GetVoltageLimit;
 
 impl Command for GetVoltageLimit {
@@ -38,7 +38,7 @@ impl Command for GetVoltageLimit {
 /// Get the maximum acceptable supply current.
 ///
 /// Set through `SetCurrentLimit`
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct GetCurrentLimit;
 
 impl Command for GetCurrentLimit {
@@ -49,7 +49,7 @@ impl Command for GetCurrentLimit {
 ///
 /// This is unaffected by the "soft" limits imposed by `SetVoltageLimit`
 /// and `SetCurrentLimit`.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct GetCapabilities;
 
 impl Command for GetCapabilities {
@@ -57,6 +57,7 @@ impl Command for GetCapabilities {
 }
 
 /// Get a list of the pre-set operating points.
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct GetPresets;
 
 impl Command for GetPresets {

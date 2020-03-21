@@ -1,8 +1,9 @@
-///! Command for setting a "soft" voltage limit.
+//! Command for setting a "soft" voltage limit.
 use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Voltage,
 };
 
 use std::io;
@@ -11,8 +12,8 @@ use std::io;
 ///
 /// This limit applies to settings via the front panel, but can be lifted via
 /// USB-serial control.
-#[derive(Debug, PartialEq)]
-pub struct SetVoltageLimit(f32);
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct SetVoltageLimit(pub f32);
 
 impl Command for SetVoltageLimit {
     const FUNCTION: &'static str = "SOVP";
@@ -28,6 +29,18 @@ impl Command for SetVoltageLimit {
         };
 
         fmt.serialize_arg(sink, self.0)
+    }
+}
+
+impl From<Voltage> for SetVoltageLimit {
+    fn from(v: Voltage) -> Self {
+        SetVoltageLimit(v.0)
+    }
+}
+
+impl From<f32> for SetVoltageLimit {
+    fn from(v: f32) -> Self {
+        SetVoltageLimit(v)
     }
 }
 

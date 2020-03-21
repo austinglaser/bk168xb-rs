@@ -21,7 +21,7 @@ use crate::{command, response};
 use std::{io, str};
 
 /// Output state of the supply.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum OutputState {
     /// The supply is actively providing power.
     On,
@@ -35,8 +35,8 @@ impl OutputState {
     ///
     /// N.B.: This field has inverted logic in commands -- it uses 0 for on, and
     /// 1 for off.
-    pub(crate) fn arg_val(&self) -> usize {
-        match *self {
+    pub(crate) fn arg_val(self) -> usize {
+        match self {
             OutputState::On => 0,
             OutputState::Off => 1,
         }
@@ -44,7 +44,7 @@ impl OutputState {
 }
 
 /// A supply's output mode.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum OutputMode {
     /// Constant voltage mode.
     ///
@@ -60,7 +60,7 @@ pub enum OutputMode {
 }
 
 /// Used to select a single preset
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum PresetIndex {
     /// First preset
     One,
@@ -76,8 +76,8 @@ impl PresetIndex {
     /// Get a concrete index integer for this preset.
     ///
     /// Appropriate for use in commands, or for indexing preset arrays.
-    pub(crate) fn arg_val(&self) -> usize {
-        match *self {
+    pub(crate) fn arg_val(self) -> usize {
+        match self {
             PresetIndex::One => 0,
             PresetIndex::Two => 1,
             PresetIndex::Three => 2,
@@ -86,7 +86,7 @@ impl PresetIndex {
 }
 
 /// A power-supply operating point
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct OperatingPoint {
     /// Voltage setpoint.
     pub voltage: f32,
@@ -116,7 +116,7 @@ pub struct OperatingPoint {
 /// let mut info = *bk168xb::psu::BK1688B;
 /// info.current_decimals = 3;
 /// ```
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub struct Info {
     /// The number of decimal places in commands encoding current.

@@ -8,7 +8,7 @@ use crate::{
 ///
 /// This is the response format used by the
 /// [`GetSettings`](crate::command::GetSettings) command.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Settings {
     /// Maximum output voltage.
     pub voltage: f32,
@@ -39,6 +39,7 @@ impl Response for Settings {
         Ok(Settings { voltage, current })
     }
 }
+
 #[cfg(test)]
 galvanic_test::test_suite! {
     name test;

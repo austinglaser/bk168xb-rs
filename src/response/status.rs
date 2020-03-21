@@ -8,7 +8,7 @@ use crate::{
 ///
 /// This is the response format used by the
 /// [`GetStatus`](crate::command::GetStatus) command.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Status {
     /// Output voltage \[v\].
     pub voltage: f32,

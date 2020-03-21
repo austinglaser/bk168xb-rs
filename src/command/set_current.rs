@@ -4,13 +4,14 @@ use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Current,
 };
 
 use std::io;
 
 /// Set the supply's operating current.
-#[derive(Debug, PartialEq)]
-pub struct SetCurrent(f32);
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct SetCurrent(pub f32);
 
 impl Command for SetCurrent {
     const FUNCTION: &'static str = "CURR";
@@ -26,6 +27,18 @@ impl Command for SetCurrent {
         };
 
         fmt.serialize_arg(sink, self.0)
+    }
+}
+
+impl From<Current> for SetCurrent {
+    fn from(c: Current) -> Self {
+        SetCurrent(c.0)
+    }
+}
+
+impl From<f32> for SetCurrent {
+    fn from(i: f32) -> Self {
+        SetCurrent(i)
     }
 }
 

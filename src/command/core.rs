@@ -30,7 +30,7 @@ pub trait Command {
 }
 
 /// A target for command serialization.
-pub trait CommandSink {
+pub(crate) trait CommandSink {
     /// Write the command to a sink.
     ///
     /// # Arguments

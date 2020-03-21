@@ -3,16 +3,17 @@ use crate::{
     psu::ArgFormat,
     response::{Error::MalformedResponse, Response, Result},
 };
+use std::ops::{Index, IndexMut};
 
 /// The supply's pre-configured operating points.
 ///
 /// This is the response format used by the
 /// [`GetPresets`](crate::command::GetPresets) command.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Presets(
-    psu::OperatingPoint,
-    psu::OperatingPoint,
-    psu::OperatingPoint,
+    pub psu::OperatingPoint,
+    pub psu::OperatingPoint,
+    pub psu::OperatingPoint,
 );
 
 impl Response for Presets {
@@ -61,6 +62,28 @@ impl Presets {
         let current = i_fmt.parse(i_raw)?;
 
         Ok(psu::OperatingPoint { voltage, current })
+    }
+}
+
+impl Index<psu::PresetIndex> for Presets {
+    type Output = psu::OperatingPoint;
+
+    fn index(&self, i: psu::PresetIndex) -> &Self::Output {
+        match i {
+            psu::PresetIndex::One => &self.0,
+            psu::PresetIndex::Two => &self.1,
+            psu::PresetIndex::Three => &self.2,
+        }
+    }
+}
+
+impl IndexMut<psu::PresetIndex> for Presets {
+    fn index_mut(&mut self, i: psu::PresetIndex) -> &mut Self::Output {
+        match i {
+            psu::PresetIndex::One => &mut self.0,
+            psu::PresetIndex::Two => &mut self.1,
+            psu::PresetIndex::Three => &mut self.2,
+        }
     }
 }
 

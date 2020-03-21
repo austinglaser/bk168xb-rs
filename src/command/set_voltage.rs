@@ -4,13 +4,14 @@ use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Voltage,
 };
 
 use std::io;
 
 /// Set the supply's operating voltage.
-#[derive(Debug, PartialEq)]
-pub struct SetVoltage(f32);
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct SetVoltage(pub f32);
 
 impl Command for SetVoltage {
     const FUNCTION: &'static str = "VOLT";
@@ -26,6 +27,18 @@ impl Command for SetVoltage {
         };
 
         fmt.serialize_arg(sink, self.0)
+    }
+}
+
+impl From<Voltage> for SetVoltage {
+    fn from(v: Voltage) -> Self {
+        SetVoltage(v.0)
+    }
+}
+
+impl From<f32> for SetVoltage {
+    fn from(v: f32) -> Self {
+        SetVoltage(v)
     }
 }
 

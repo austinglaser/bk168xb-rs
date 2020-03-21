@@ -8,8 +8,8 @@ use psu::ArgFormat;
 ///
 /// This is the response format used by the
 /// (`GetCurrentLimit`)[crate::command::GetCurrentLimit] command.
-#[derive(Debug, PartialEq)]
-pub struct Current(f32);
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct Current(pub f32);
 
 impl Response for Current {
     fn arg_bytes() -> usize {
@@ -25,6 +25,12 @@ impl Response for Current {
         let current = current_fmt.parse(raw)?;
 
         Ok(Current(current))
+    }
+}
+
+impl From<f32> for Current {
+    fn from(i: f32) -> Self {
+        Current(i)
     }
 }
 

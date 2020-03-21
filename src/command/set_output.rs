@@ -9,8 +9,8 @@ use crate::{
 use std::io;
 
 /// Control whether the supply is supplying power.
-#[derive(Debug, PartialEq)]
-pub struct SetOutput(psu::OutputState);
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct SetOutput(pub psu::OutputState);
 
 impl Command for SetOutput {
     const FUNCTION: &'static str = "SOUT";

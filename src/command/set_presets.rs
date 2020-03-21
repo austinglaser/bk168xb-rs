@@ -4,16 +4,18 @@ use crate::{
     command::{self, Command},
     psu,
     psu::ArgFormat,
+    response::Presets,
 };
+use std::ops::{Index, IndexMut};
 
 use std::io;
 
 /// Configure the supply's pre-set operating points.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct SetPresets(
-    psu::OperatingPoint,
-    psu::OperatingPoint,
-    psu::OperatingPoint,
+    pub psu::OperatingPoint,
+    pub psu::OperatingPoint,
+    pub psu::OperatingPoint,
 );
 
 impl Command for SetPresets {
@@ -42,6 +44,34 @@ impl Command for SetPresets {
         i_fmt.serialize_arg(sink, self.2.current)?;
 
         Ok(())
+    }
+}
+
+impl From<Presets> for SetPresets {
+    fn from(p: Presets) -> Self {
+        SetPresets(p.0, p.1, p.2)
+    }
+}
+
+impl Index<psu::PresetIndex> for SetPresets {
+    type Output = psu::OperatingPoint;
+
+    fn index(&self, i: psu::PresetIndex) -> &Self::Output {
+        match i {
+            psu::PresetIndex::One => &self.0,
+            psu::PresetIndex::Two => &self.1,
+            psu::PresetIndex::Three => &self.2,
+        }
+    }
+}
+
+impl IndexMut<psu::PresetIndex> for SetPresets {
+    fn index_mut(&mut self, i: psu::PresetIndex) -> &mut Self::Output {
+        match i {
+            psu::PresetIndex::One => &mut self.0,
+            psu::PresetIndex::Two => &mut self.1,
+            psu::PresetIndex::Three => &mut self.2,
+        }
     }
 }
 

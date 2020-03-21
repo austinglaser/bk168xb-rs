@@ -43,7 +43,7 @@ impl Response for () {
 }
 
 /// The receiving side of a power-supply communication link.
-pub trait ResponseSource {
+pub(crate) trait ResponseSource {
     /// Receive a response from the power supply.
     ///
     /// Should almost always be paired with a call to
