@@ -101,6 +101,19 @@ pub struct OperatingPoint {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub struct SupplyVariant {
+    /// The supply's model number
+    pub model: &'static str,
+
+    /// The stated maximum voltage.
+    ///
+    /// Generally, a supply's reported capabilities are slightly above this.
+    pub nominal_max_voltage: usize,
+
+    /// The stated maximum current.
+    ///
+    /// Generally, a supply's reported capabilities are slightly above this.
+    pub nominal_max_current: usize,
+
     /// The number of decimal places in commands encoding current.
     pub current_decimals: usize,
 
@@ -118,16 +131,25 @@ pub const BK1687B: &SupplyVariant = &BK1687B_INST;
 pub const BK1688B: &SupplyVariant = &BK1688B_INST;
 
 const BK1685B_INST: SupplyVariant = SupplyVariant {
+    model: "BK1685B",
+    nominal_max_voltage: 60,
+    nominal_max_current: 5,
     current_decimals: 2,
     voltage_decimals: 1,
 };
 
 const BK1687B_INST: SupplyVariant = SupplyVariant {
+    model: "BK1687B",
+    nominal_max_voltage: 36,
+    nominal_max_current: 10,
     current_decimals: 1,
     voltage_decimals: 1,
 };
 
 const BK1688B_INST: SupplyVariant = SupplyVariant {
+    model: "BK1688B",
+    nominal_max_voltage: 18,
+    nominal_max_current: 20,
     current_decimals: 1,
     voltage_decimals: 1,
 };
