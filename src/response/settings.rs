@@ -32,8 +32,8 @@ impl Response for Settings {
         };
 
         let (volt_raw, curr_raw) = raw.split_at(volt_fmt.digits);
-        let voltage = volt_fmt.parse(volt_raw).unwrap();
-        let current = curr_fmt.parse(curr_raw).unwrap();
+        let voltage = volt_fmt.parse(volt_raw)?;
+        let current = curr_fmt.parse(curr_raw)?;
 
         Ok(Settings { voltage, current })
     }
@@ -46,8 +46,11 @@ galvanic_test::test_suite! {
     use super::*;
 
     use crate::{
-        response::test_util::expect_deserializes_to,
-        test_util::{high_voltage_psu, low_voltage_psu},
+        response::{
+            test_util::{expect_deserialize_error, expect_deserializes_to},
+            Error::MalformedResponse,
+        },
+        test_util::{any_psu, high_voltage_psu, low_voltage_psu},
     };
 
     test can_parse_for_low_voltage(low_voltage_psu) {
@@ -153,6 +156,26 @@ galvanic_test::test_suite! {
                 current: 0.51,
             },
             variant
+        );
+    }
+
+    test fails_to_parse_invalid_settings(any_psu) {
+        let _e = expect_deserialize_error::<Settings>(
+            "x00000\rOK\r",
+            MalformedResponse,
+            any_psu.val,
+        );
+
+        let _e = expect_deserialize_error::<Settings>(
+            "000x00\rOK\r",
+            MalformedResponse,
+            any_psu.val,
+        );
+
+        let _e = expect_deserialize_error::<Settings>(
+            "1234567\rOK\r",
+            MalformedResponse,
+            any_psu.val,
         );
     }
 }
