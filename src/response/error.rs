@@ -4,6 +4,7 @@ use std::io;
 
 /// Errors that can arise from `Response` functions.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum Error {
     /// The PSU returned data, but it didn't match the expected format.
     #[error("malformed command response")]

@@ -4,6 +4,7 @@ use std::io;
 
 /// Errors that can arise from `Command` functions.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum Error {
     /// The command contained a value which is invalid for its format.
     #[error("unrepresentable value in command: {0}")]
