@@ -32,6 +32,16 @@ pub trait Response: Sized + PartialEq {
     fn parse_args(raw: &[u8], psu: &psu::Info) -> Result<Self>;
 }
 
+impl Response for () {
+    fn arg_bytes() -> usize {
+        0
+    }
+
+    fn parse_args(_raw: &[u8], _psu: &psu::Info) -> Result<Self> {
+        Ok(())
+    }
+}
+
 /// The receiving side of a power-supply communication link.
 pub trait ResponseSource {
     /// Receive a response from the power supply.
@@ -109,13 +119,13 @@ galvanic_test::test_suite! {
         psu::{self, test_util::any_psu},
         response::{
             test_util::{
-                expect_deserialize_error, expect_deserialize_error_from,
-                invalid_ack, invalid_sep, io_error, valid_ack, valid_sep,
-                ErrorAfter,
+                assert_deserializes_to, expect_deserialize_error,
+                expect_deserialize_error_from, invalid_ack, invalid_sep,
+                io_error, valid_ack, valid_sep, ErrorAfter,
             },
-            Ack, Current, Presets, Response,
+            Current,
             Error::*,
-            Settings, Status, Voltage,
+            Presets, Response, Settings, Status, Voltage,
         },
     };
 
@@ -125,10 +135,14 @@ galvanic_test::test_suite! {
     use std::io;
     use std::iter::repeat;
 
+    test can_parse(any_psu, valid_ack) {
+        assert_deserializes_to(valid_ack.val, (), any_psu.val);
+    }
+
     test fails_to_parse_with_no_response(any_psu) {
         let psu = any_psu.val;
 
-        let _e = expect_no_resp_parse_error::<Ack>(psu);
+        let _e = expect_no_resp_parse_error::<()>(psu);
         let _e = expect_no_resp_parse_error::<Voltage>(psu);
         let _e = expect_no_resp_parse_error::<Current>(psu);
         let _e = expect_no_resp_parse_error::<Settings>(psu);
@@ -190,7 +204,7 @@ galvanic_test::test_suite! {
         let ack = valid_ack.val;
         let sep = invalid_sep.val;
 
-        let _e = expect_bad_sep_parse_error::<Ack>(psu, sep, ack);
+        let _e = expect_bad_sep_parse_error::<()>(psu, sep, ack);
         let _e = expect_bad_sep_parse_error::<Voltage>(psu, sep, ack);
         let _e = expect_bad_sep_parse_error::<Current>(psu, sep, ack);
         let _e = expect_bad_sep_parse_error::<Settings>(psu, sep, ack);
@@ -219,7 +233,7 @@ galvanic_test::test_suite! {
         let ack = valid_ack.val;
         let sep = valid_sep.val;
 
-        let _e = expect_dupe_sep_parse_error::<Ack>(psu, sep, ack);
+        let _e = expect_dupe_sep_parse_error::<()>(psu, sep, ack);
         let _e = expect_dupe_sep_parse_error::<Voltage>(psu, sep, ack);
         let _e = expect_dupe_sep_parse_error::<Current>(psu, sep, ack);
         let _e = expect_dupe_sep_parse_error::<Settings>(psu, sep, ack);
@@ -249,7 +263,7 @@ galvanic_test::test_suite! {
         let ack = invalid_ack.val;
         let sep = valid_sep.val;
 
-        let _e = expect_invalid_ack_parse_error::<Ack>(psu, sep, ack);
+        let _e = expect_invalid_ack_parse_error::<()>(psu, sep, ack);
         let _e = expect_invalid_ack_parse_error::<Voltage>(psu, sep, ack);
         let _e = expect_invalid_ack_parse_error::<Current>(psu, sep, ack);
         let _e = expect_invalid_ack_parse_error::<Settings>(psu, sep, ack);
@@ -275,7 +289,7 @@ galvanic_test::test_suite! {
         let psu = any_psu.val;
         let err = io_error.val;
 
-        let _e = expect_catches_io_error::<Ack>(psu, err);
+        let _e = expect_catches_io_error::<()>(psu, err);
         let _e = expect_catches_io_error::<Voltage>(psu, err);
         let _e = expect_catches_io_error::<Current>(psu, err);
         let _e = expect_catches_io_error::<Settings>(psu, err);
