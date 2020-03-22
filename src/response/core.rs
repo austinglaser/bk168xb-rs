@@ -128,7 +128,7 @@ galvanic_test::test_suite! {
                 expect_deserialize_error_from, invalid_ack, invalid_sep,
                 io_error, valid_ack, valid_sep, ErrorAfter,
             },
-            Current,
+            Capabilities, Current,
             Error::*,
             Presets, Response, Settings, Status, Voltage,
         },
@@ -155,6 +155,7 @@ galvanic_test::test_suite! {
         let _e = expect_no_resp_parse_error::<Settings>(variant);
         let _e = expect_no_resp_parse_error::<Status>(variant);
         let _e = expect_no_resp_parse_error::<Presets>(variant);
+        let _e = expect_no_resp_parse_error::<Capabilities>(variant);
 
         fn expect_no_resp_parse_error<R: Response + Debug>(
             variant: &SupplyVariant,
@@ -172,6 +173,7 @@ galvanic_test::test_suite! {
         let _e = expect_no_val_parse_error::<Settings>(variant, ack);
         let _e = expect_no_val_parse_error::<Status>(variant, ack);
         let _e = expect_no_val_parse_error::<Presets>(variant, ack);
+        let _e = expect_no_val_parse_error::<Capabilities>(variant, ack);
 
         fn expect_no_val_parse_error<R: Response + Debug>(
             variant: &SupplyVariant,
@@ -190,6 +192,7 @@ galvanic_test::test_suite! {
         let _e = expect_no_sep_parse_error::<Settings>(variant, ack);
         let _e = expect_no_sep_parse_error::<Status>(variant, ack);
         let _e = expect_no_sep_parse_error::<Presets>(variant, ack);
+        let _e = expect_no_sep_parse_error::<Capabilities>(variant, ack);
 
         fn expect_no_sep_parse_error<R: Response + Debug>(
             variant: &SupplyVariant,
@@ -217,6 +220,7 @@ galvanic_test::test_suite! {
         let _e = expect_bad_sep_parse_error::<Settings>(variant, sep, ack);
         let _e = expect_bad_sep_parse_error::<Status>(variant, sep, ack);
         let _e = expect_bad_sep_parse_error::<Presets>(variant, sep, ack);
+        let _e = expect_bad_sep_parse_error::<Capabilities>(variant, sep, ack);
 
         fn expect_bad_sep_parse_error<R: Response + Debug>(
             variant: &SupplyVariant,
@@ -246,6 +250,7 @@ galvanic_test::test_suite! {
         let _e = expect_dupe_sep_parse_error::<Settings>(variant, sep, ack);
         let _e = expect_dupe_sep_parse_error::<Status>(variant, sep, ack);
         let _e = expect_dupe_sep_parse_error::<Presets>(variant, sep, ack);
+        let _e = expect_dupe_sep_parse_error::<Capabilities>(variant, sep, ack);
 
         fn expect_dupe_sep_parse_error<R: Response + Debug>(
             variant: &SupplyVariant,
@@ -276,6 +281,8 @@ galvanic_test::test_suite! {
         let _e = expect_invalid_ack_parse_error::<Settings>(variant, sep, ack);
         let _e = expect_invalid_ack_parse_error::<Status>(variant, sep, ack);
         let _e = expect_invalid_ack_parse_error::<Presets>(variant, sep, ack);
+        let _e
+            = expect_invalid_ack_parse_error::<Capabilities>(variant, sep, ack);
 
         fn expect_invalid_ack_parse_error<R: Response + Debug>(
             variant: &SupplyVariant,
@@ -302,6 +309,7 @@ galvanic_test::test_suite! {
         let _e = expect_catches_io_error::<Settings>(variant, err);
         let _e = expect_catches_io_error::<Status>(variant, err);
         let _e = expect_catches_io_error::<Presets>(variant, err);
+        let _e = expect_catches_io_error::<Capabilities>(variant, err);
 
         fn expect_catches_io_error<R: Response + Debug>(
             variant: &SupplyVariant,

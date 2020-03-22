@@ -1,5 +1,6 @@
 //! Type-safe BK168xB response parsing
 
+mod capabilities;
 mod core;
 mod current;
 mod error;
@@ -12,6 +13,6 @@ mod voltage;
 pub(crate) mod test_util;
 
 pub use self::{
-    core::*, current::*, error::*, presets::*, settings::*, status::*,
-    voltage::*,
+    capabilities::*, core::*, current::*, error::*, presets::*, settings::*,
+    status::*, voltage::*,
 };

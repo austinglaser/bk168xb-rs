@@ -154,6 +154,24 @@ const BK1688B_INST: SupplyVariant = SupplyVariant {
     voltage_decimals: 1,
 };
 
+pub(crate) fn variant_for_max_voltage(
+    voltage: f32,
+) -> Option<&'static SupplyVariant> {
+    for supply in &[BK1685B, BK1687B, BK1688B] {
+        let nom_volt = supply.nominal_max_voltage as f32;
+
+        // This band is pretty arbitrary. It's intentionally lax (I don't think
+        // I've seen a supply ever report more than a couple volts higher than
+        // its nominal value).
+        let top_volt = nom_volt + 10.;
+        if voltage >= nom_volt && voltage < top_volt {
+            return Some(supply);
+        }
+    }
+
+    None
+}
+
 pub(crate) struct ArgFormat {
     pub decimals: usize,
     pub digits: usize,
